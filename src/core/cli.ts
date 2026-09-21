@@ -63,7 +63,9 @@ Load shaping (applied to every load scenario):
   -w, --warmup <s>         Warmup window in seconds (0 disables warmup, also the
                            discarded first run of task scenarios)
       --scenarios <list>   Only run these operations (comma-separated, e.g.
-                           health,account,listServers or compress,deleteTree)
+                           health,account,listServers or compress,deleteTree).
+                           'listDirectory' spans both kinds: the small listing runs
+                           as load, the large ones as tasks
 
 Task shaping (applied to every task scenario):
       --repetitions <n>    Measured runs per task scenario
@@ -101,7 +103,7 @@ Output:
   -h, --help               Show this help
 `;
 
-const KNOWN_OPERATIONS: readonly string[] = [...KNOWN_LOAD_OPERATIONS, ...KNOWN_TASK_OPERATIONS];
+const KNOWN_OPERATIONS: readonly string[] = [...new Set<string>([...KNOWN_LOAD_OPERATIONS, ...KNOWN_TASK_OPERATIONS])];
 
 export function parseCli(argv: readonly string[]): CliConfig | 'help' {
   let parsed: ReturnType<typeof parseArgs<{ options: typeof OPTIONS; allowPositionals: true }>>;

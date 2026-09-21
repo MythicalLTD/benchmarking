@@ -14,6 +14,7 @@ import {
   ensureDataset,
   fileSize,
   isGeneratedArchive,
+  LIST_SIZES,
   listDirName,
   OUTPUT_PATHS,
   randomBytes,
@@ -29,6 +30,7 @@ import type { TaskOutcome, TaskRunner } from './target.ts';
 import type {
   ArchiveFormat,
   AuthContext,
+  HttpMethod,
   Operation,
   RequestSpec,
   ResourceLimit,
@@ -147,6 +149,7 @@ export abstract class WingsDaemon extends DockerDaemon implements TaskRunner {
     notes.push(
       'archive tasks run warm: the warmup run pulls the tree into page cache, so they compare codecs rather than cold-disk reads',
       'decompress is benchmarked for formats a daemon cannot create, so zip decompress is comparable even where zip compress is not',
+      'large directory listings are timed one at a time rather than driven by a load generator, and run warm: the warmup run pulls the entries and inodes into cache, so they compare readdir/stat and serialisation rather than cold metadata reads',
     );
     if (this.dataset?.reflink === true) {
       notes.push(
@@ -227,7 +230,7 @@ export abstract class WingsDaemon extends DockerDaemon implements TaskRunner {
       case 'system':
         return { method: 'GET', url: this.url('/api/system'), headers: this.authHeaders(auth) };
       case 'listDirectory': {
-        const entries = Number(params.entries ?? 500);
+        const entries = entriesParam(params, operation);
         return {
           method: 'GET',
           url: this.serverUrl(`files/list-directory?directory=${encodeURIComponent(`/${listDirName(entries)}`)}`),
@@ -259,10 +262,12 @@ export abstract class WingsDaemon extends DockerDaemon implements TaskRunner {
     const archives = new Set<string>();
     const listSizes = new Set<number>();
     for (const scenario of scenarios) {
+      // Listing spans both kinds, so its fixture is claimed before load scenarios are skipped.
+      if (scenario.operation === 'listDirectory') {
+        listSizes.add(entriesParam(scenario.params, scenario.name));
+        continue;
+      }
       if (scenario.kind === 'load') {
-        if (scenario.operation === 'listDirectory') {
-          listSizes.add(Number(scenario.params?.entries ?? 50));
-        }
         continue;
       }
       switch (scenario.operation) {
@@ -294,6 +299,9 @@ export abstract class WingsDaemon extends DockerDaemon implements TaskRunner {
           ? null
           : 'input archive missing';
       }
+      case 'listDirectory': {
+        return dataset.lists.has(entriesParam(scenario.params, scenario.name)) ? null : 'list fixture missing';
+      }
       default:
         return null;
     }
@@ -319,6 +327,9 @@ export abstract class WingsDaemon extends DockerDaemon implements TaskRunner {
       case 'writeFile':
         await rm(path.join(root, OUTPUT_PATHS.upload), { force: true });
         break;
+      case 'listDirectory':
+        // Nothing to restore, and no writeback to flush.
+        return;
       default:
         break;
     }
@@ -375,6 +386,24 @@ export abstract class WingsDaemon extends DockerDaemon implements TaskRunner {
           'tree still present',
         );
       }
+      case 'listDirectory': {
+        const entries = entriesParam(scenario.params, scenario.name);
+        const { outcome, body } = await this.timedRequest(
+          `files/list-directory?directory=${encodeURIComponent(`/${listDirName(entries)}`)}`,
+          auth,
+          { method: 'GET' },
+          0,
+        );
+        if (!outcome.ok) {
+          return outcome;
+        }
+        const listed = listedEntries(body);
+        return verify(
+          outcome,
+          listed === entries,
+          listed === null ? 'listing was not a JSON array' : `listed ${listed}/${entries} entries`,
+        );
+      }
       case 'writeFile': {
         const body = this.upload(UPLOAD_BYTES);
         const outcome = await this.rawRequest(
@@ -416,23 +445,48 @@ export abstract class WingsDaemon extends DockerDaemon implements TaskRunner {
     bytes: number,
     headers: Record<string, string> = {},
   ): Promise<TaskOutcome> {
+    const { outcome } = await this.timedRequest(suffix, auth, { method: 'POST', headers, body }, bytes);
+    return outcome;
+  }
+
+  /**
+   * Times a request end to end, reading the body inside the window but leaving it undecoded:
+   * parsing a multi-megabyte response is the harness's cost, not the daemon's.
+   */
+  private async timedRequest(
+    suffix: string,
+    auth: AuthContext,
+    init: TaskRequest,
+    bytes: number,
+  ): Promise<{ outcome: TaskOutcome; body: Uint8Array }> {
+    const empty = new Uint8Array(0);
     const started = performance.now();
     try {
       const response = await fetch(this.serverUrl(suffix), {
-        method: 'POST',
-        headers: { ...this.authHeaders(auth), ...headers, Accept: 'application/json' },
-        body,
+        method: init.method,
+        headers: { ...this.authHeaders(auth), ...init.headers, Accept: 'application/json' },
+        body: init.body,
       });
-      const text = await response.text();
+      const body = new Uint8Array(await response.arrayBuffer());
       const elapsedMs = performance.now() - started;
       if (!response.ok) {
-        return { ok: false, status: response.status, elapsedMs, bytes, detail: text.slice(0, 200) };
+        return {
+          outcome: { ok: false, status: response.status, elapsedMs, bytes, detail: decodeDetail(body) },
+          body: empty,
+        };
       }
-      return { ok: true, status: response.status, elapsedMs, bytes };
+      return { outcome: { ok: true, status: response.status, elapsedMs, bytes }, body };
     } catch (error) {
-      return { ok: false, status: 0, elapsedMs: performance.now() - started, bytes, detail: String(error) };
+      const elapsedMs = performance.now() - started;
+      return { outcome: { ok: false, status: 0, elapsedMs, bytes, detail: String(error) }, body: empty };
     }
   }
+}
+
+interface TaskRequest {
+  readonly method: HttpMethod;
+  readonly headers?: Record<string, string>;
+  readonly body?: string | Uint8Array<ArrayBuffer>;
 }
 
 export function treeParam(scenario: TaskScenario): string {
@@ -453,6 +507,35 @@ export function formatParam(scenario: TaskScenario): ArchiveFormat {
     throw new Error(`unknown archive format '${format}'`);
   }
   return format as ArchiveFormat;
+}
+
+export function entriesParam(params: ScenarioParams | undefined, label: string): number {
+  const raw = params?.entries;
+  if (raw === undefined) {
+    throw new Error(`scenario '${label}' is missing an 'entries' parameter`);
+  }
+  const entries = Number(raw);
+  if (!LIST_SIZES.includes(entries)) {
+    throw new Error(`unknown list size '${entries}' in scenario '${label}' (available: ${LIST_SIZES.join(', ')})`);
+  }
+  return entries;
+}
+
+/**
+ * Counts the entries a listing returned, or null if it was not the bare array every daemon serves
+ * here. Guards against a daemon reporting success while truncating at a configured entry cap.
+ */
+function listedEntries(body: Uint8Array): number | null {
+  try {
+    const parsed: unknown = JSON.parse(new TextDecoder().decode(body));
+    return Array.isArray(parsed) ? parsed.length : null;
+  } catch {
+    return null;
+  }
+}
+
+function decodeDetail(body: Uint8Array): string {
+  return new TextDecoder().decode(body.subarray(0, 200));
 }
 
 /** Guards against a daemon reporting success while writing a truncated or empty archive. */

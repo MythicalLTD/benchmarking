@@ -60,6 +60,17 @@ export const DEFAULT_PANEL_SCENARIOS: readonly Scenario[] = [
 
 const TASK_DEFAULTS = { kind: 'task', auth: 'authenticated', repetitions: 5, warmup: true } as const;
 
+/**
+ * Above this many entries a listing is measured as a sequential task instead: the response runs into
+ * the megabytes, so a saturating run measures the load generator buffering bodies as much as the
+ * daemon producing them, and nothing issues such listings back to back anyway.
+ */
+const LIST_LOAD_LIMIT = 1_000;
+
+function listScenarioName(entries: number): string {
+  return `list directory (${entries} entries)`;
+}
+
 export const DEFAULT_DAEMON_SCENARIOS: readonly Scenario[] = [
   {
     kind: 'load',
@@ -68,13 +79,22 @@ export const DEFAULT_DAEMON_SCENARIOS: readonly Scenario[] = [
     auth: 'authenticated',
     load: { concurrency: 32, durationMs: 10_000, warmupMs: 1_000 },
   },
-  ...LIST_SIZES.map(
+  ...LIST_SIZES.filter((entries) => entries <= LIST_LOAD_LIMIT).map(
     (entries): Scenario => ({
       kind: 'load',
-      name: `list directory (${entries} entries)`,
+      name: listScenarioName(entries),
       operation: 'listDirectory',
       auth: 'authenticated',
-      load: { concurrency: entries >= 5_000 ? 4 : 16, durationMs: 10_000, warmupMs: 1_000 },
+      load: { concurrency: 32, durationMs: 10_000, warmupMs: 1_000 },
+      params: { entries },
+    }),
+  ),
+  ...LIST_SIZES.filter((entries) => entries > LIST_LOAD_LIMIT).map(
+    (entries): Scenario => ({
+      ...TASK_DEFAULTS,
+      name: listScenarioName(entries),
+      operation: 'listDirectory',
+      repetitions: 10,
       params: { entries },
     }),
   ),
@@ -154,7 +174,13 @@ export const KNOWN_LOAD_OPERATIONS: readonly Operation[] = [
   'fileContents',
   'chmod',
 ];
-export const KNOWN_TASK_OPERATIONS: readonly TaskOperation[] = ['compress', 'decompress', 'deleteTree', 'writeFile'];
+export const KNOWN_TASK_OPERATIONS: readonly TaskOperation[] = [
+  'compress',
+  'decompress',
+  'deleteTree',
+  'writeFile',
+  'listDirectory',
+];
 
 export const DEFAULT_VARIANTS: readonly ResourceLimit[] = [{ cpus: 1 }, { cpus: 2 }, { cpus: 4 }];
 

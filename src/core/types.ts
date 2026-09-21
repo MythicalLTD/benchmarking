@@ -14,7 +14,7 @@ export type Operation =
   | 'fileContents'
   | 'chmod';
 
-export type TaskOperation = 'compress' | 'decompress' | 'deleteTree' | 'writeFile';
+export type TaskOperation = 'compress' | 'decompress' | 'deleteTree' | 'writeFile' | 'listDirectory';
 
 export type ArchiveFormat = 'tar.gz' | 'zip';
 

@@ -22,10 +22,23 @@ There are two kinds of targets:
 
 - **Panels** (`panel:<name>`) are driven with `oha` HTTP load against their client API (settings, account, server list).
 - **Daemons** (`daemon:<name>`) are the Wings node agents. They boot against a tiny in-process mock of the panel remote API, so
-  the numbers isolate the daemon. Load scenarios (system info, list directory, file download, chmod) run through `oha`; task
-  scenarios (compress tree, decompress archive, delete tree, upload file) are timed operations on a generated dataset,
-  repeated a few times with the first run discarded as warmup. Each variant also records an idle CPU/heap baseline, sampled
-  while the daemon is up but taking no requests.
+  the numbers isolate the daemon. Load scenarios (system info, small directory listing, file download, chmod) run through `oha`;
+  task scenarios (large directory listings, compress tree, decompress archive, delete tree, upload file) are timed operations on
+  a generated dataset, repeated a few times with the first run discarded as warmup. Each variant also records an idle CPU/heap
+  baseline, sampled while the daemon is up but taking no requests.
+
+Directory listings straddle the two kinds. A 50-entry listing is a hot path with a tiny response, so `oha` measures the thing
+that matters there: per-request fixed overhead under concurrency. The 5000- and 50000-entry listings are not a sustained load -
+nobody issues them back to back - and their responses run into the megabytes, so driving them with a load generator mostly
+measures the generator buffering response bodies. Those run as tasks instead, one listing at a time, which also makes the
+sampled heap figure mean "what one large listing costs" rather than "what N concurrent ones cost". The listing fixtures are
+flat directories of 256 B files:
+
+| Listing | Shape               | Runs as            |
+| ------- | ------------------- | ------------------ |
+| 50      | 50 × 256 B files    | load (`oha`, c=32) |
+| 5000    | 5000 × 256 B files  | task, 10 runs      |
+| 50000   | 50000 × 256 B files | task, 10 runs      |
 
 Archive and delete tasks run against named tree fixtures rather than a single size axis, so throughput and per-file overhead can
 be told apart:
