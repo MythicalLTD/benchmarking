@@ -361,20 +361,22 @@ export class Suite {
         observer.onVariantStart?.(limit);
         variants.push(await this.runVariant(target, limit, observer));
       }
+      // Built inside the try so the notes are read before release() frees what they describe.
+      return {
+        target: target.label,
+        kind: target.kind,
+        version: this.version,
+        startedAt,
+        notes: target.notes(),
+        variants,
+      };
     } finally {
       for (const signal of CLEANUP_SIGNALS) {
         process.off(signal, onSignal);
       }
+      // Never let a cleanup failure mask the error on its way out.
+      await target.release().catch((err: unknown) => console.error(colors.red('release failed:'), err));
     }
-
-    return {
-      target: target.label,
-      kind: target.kind,
-      version: this.version,
-      startedAt,
-      notes: target.notes(),
-      variants,
-    };
   }
 
   private makeSignalHandler(): (signal: NodeJS.Signals) => void {

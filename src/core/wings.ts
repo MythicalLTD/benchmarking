@@ -7,6 +7,7 @@ import {
   ARCHIVE_FORMATS,
   archiveKey,
   CHUNK_PATH,
+  cleanOutputs,
   copyTree,
   countFiles,
   type Dataset,
@@ -49,6 +50,7 @@ export interface WingsDaemonOptions {
   readonly service?: string;
   readonly workdir?: string;
   readonly settleMs?: number;
+  readonly prune?: boolean;
 }
 
 export interface WingsConfigContext {
@@ -100,6 +102,7 @@ export abstract class WingsDaemon extends DockerDaemon implements TaskRunner {
   private port: number;
   private readonly workdir: string;
   private readonly settleMs: number;
+  private readonly prune: boolean;
   private readonly mock: RemoteMock;
   private ownsNetwork = false;
   private dataset: Dataset | null = null;
@@ -115,6 +118,7 @@ export abstract class WingsDaemon extends DockerDaemon implements TaskRunner {
     this.serviceName = options.service ?? 'wings';
     this.workdir = path.resolve(options.workdir ?? DEFAULT_WORKDIR, `daemon-${flavor.name}`);
     this.settleMs = options.settleMs ?? 10_000;
+    this.prune = options.prune === true;
     this.mock = new RemoteMock({
       tokenId: TOKEN_ID,
       token: TOKEN,
@@ -185,6 +189,10 @@ export abstract class WingsDaemon extends DockerDaemon implements TaskRunner {
   }
 
   async start(limit: ResourceLimit): Promise<void> {
+    // Wings appends to its log forever and never rotates it, and Calagopus writes a line per
+    // request, so a repeated sweep grows the log past the fixtures it is measuring. Dropping it
+    // as the variant starts bounds it to one variant's worth and still leaves it for a post-mortem.
+    await rm(path.join(this.workdir, 'log'), { recursive: true, force: true });
     await Promise.all(
       ['etc', 'lib', 'log', 'tmp'].map((dir) => mkdir(path.join(this.workdir, dir), { recursive: true })),
     );
@@ -218,6 +226,19 @@ export abstract class WingsDaemon extends DockerDaemon implements TaskRunner {
         await networkRemove(this.flavor.networkName).catch(() => undefined);
       }
       await this.mock.stop();
+    }
+  }
+
+  /**
+   * The outputs cost nothing to rebuild, so they always go. The fixtures are cached across runs
+   * and cost ~40s to regenerate, so they only go when asked: holding every daemon's set at once
+   * is what makes a group sweep need tens of gigabytes.
+   */
+  override async release(): Promise<void> {
+    await cleanOutputs(this.serverRoot);
+    if (this.prune) {
+      await rm(this.serverRoot, { recursive: true, force: true });
+      await rm(path.join(this.workdir, 'log'), { recursive: true, force: true });
     }
   }
 

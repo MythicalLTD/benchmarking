@@ -14,6 +14,7 @@ export interface StackOptions {
 export interface CommonDaemonOptions {
   workdir?: string;
   settleMs?: number;
+  prune?: boolean;
 }
 
 export interface CliConfig {
@@ -94,6 +95,10 @@ Target:
                            daemon targets only)
       --settle <s>         Seconds to wait after a daemon is ready (default 10;
                            daemon targets only)
+      --prune              Delete a target's generated dataset and logs once it is done
+                           instead of keeping them cached. Frees ~5GB per daemon, at the
+                           cost of regenerating the fixtures (~40s each) on the next run.
+                           Transient outputs are always freed (daemon targets only)
 
 Output:
       --json               Emit the raw report as JSON on stdout (progress to stderr)
@@ -160,6 +165,7 @@ const OPTIONS = {
   service: { type: 'string' },
   workdir: { type: 'string' },
   settle: { type: 'string' },
+  prune: { type: 'boolean' },
   compare: { type: 'string' },
   json: { type: 'boolean' },
   'no-pull': { type: 'boolean' },
@@ -198,6 +204,9 @@ function parseDaemon(values: Values): CommonDaemonOptions {
   const settleS = optionalInt(values.settle, '--settle', { min: 0 });
   if (settleS !== undefined) {
     daemon.settleMs = settleS * 1000;
+  }
+  if (values.prune === true) {
+    daemon.prune = true;
   }
   return daemon;
 }

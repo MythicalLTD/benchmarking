@@ -74,12 +74,25 @@ pnpm run bench daemon:all --trees many --repetitions 10      # only the small-fi
 pnpm run bench daemon:calagopus --formats tar.gz             # skip the zip archive tasks
 pnpm run bench all --output-dir results                      # write results/<kind>-<name>.json for each target
 pnpm run bench daemon:all --no-pull                          # skip the image pull (offline, or to pin to cached images)
+pnpm run bench all --prune                                   # free each daemon's fixtures once it is done, not just its outputs
 ```
 
 With `--output-dir <dir>` (short `-o`) each suite report is written to `<dir>/<target>.json` (with the `:` replaced by `-`),
 pretty-printed, as soon as that suite finishes. The directory is created if it does not exist. This works for single, `--compare`,
 and group runs. When running a group, a failing target does not abort the sweep: the remaining targets still run, the failure is
 reported at the end, and the process exits non-zero.
+
+## Disk use
+
+Daemon targets generate their fixtures under `.bench/daemon-<name>/` and cache them across runs, keyed by a spec
+marker, so a rerun of the same target skips the ~40s of generation. The fixtures are around 3.7 GB per daemon, and a
+group run holds every daemon's set at once - so `all` needs roughly 15 GB, on top of the images it pulls.
+
+Transient outputs (the extracted tree, the restored delete fixture, the uploaded file and any produced archive) are
+always freed once a target finishes, as is the daemon log at the start of each variant: wings never rotates its log,
+and Calagopus Wings writes a line per request, so an unattended sweep otherwise grows a log larger than the fixtures
+it is measuring. Pass `--prune` to also drop each daemon's fixtures and logs as soon as that target is done, which
+keeps only one daemon's set on disk at a time and costs a regeneration on the next run.
 
 ## Contributing
 

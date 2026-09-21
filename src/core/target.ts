@@ -54,6 +54,11 @@ export abstract class Target {
     return null;
   }
 
+  /** Frees what the target generated on disk, once its suite no longer needs it. */
+  async release(): Promise<void> {
+    return undefined;
+  }
+
   abstract containerId(): Promise<string | null>;
   abstract authenticate(): Promise<AuthContext>;
 
