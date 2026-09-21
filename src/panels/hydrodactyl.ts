@@ -1,7 +1,7 @@
 import path from 'node:path';
 import colors from 'ansi-colors';
 import { composeExec } from '../core/docker.ts';
-import { DockerPanel } from '../core/panel.ts';
+import { DockerPanel, laravelVersion, versionFromCommand } from '../core/panel.ts';
 import type { AuthContext, Operation, RequestSpec, ResourceLimit } from '../core/types.ts';
 import { cookieHeader, parseSetCookies, randomHighPort } from '../core/utils.ts';
 
@@ -27,7 +27,14 @@ const DEFAULT_CREDENTIALS: HydrodactylCredentials = {
   password: 'benchmark-password-123',
 };
 
-const DEFAULT_COMPOSE_FILE = path.resolve(import.meta.dirname, '..', '..', 'docker', 'hydrodactyl.compose.yml');
+const DEFAULT_COMPOSE_FILE = path.resolve(
+  import.meta.dirname,
+  '..',
+  '..',
+  'docker',
+  'panels',
+  'hydrodactyl.compose.yml',
+);
 
 export class HydrodactylPanel extends DockerPanel {
   readonly name = 'hydrodactyl';
@@ -62,7 +69,7 @@ export class HydrodactylPanel extends DockerPanel {
     }
     this.compose = {
       file: options.composeFile ?? DEFAULT_COMPOSE_FILE,
-      project: options.project ?? 'hydrodactyl-bench',
+      project: options.project ?? 'hydrodactyl-panel-bench',
       env,
     };
   }
@@ -76,6 +83,25 @@ export class HydrodactylPanel extends DockerPanel {
       HYDRODACTYL_CPUS: String(limit.cpus),
       HYDRODACTYL_MEM: limit.memoryMb !== undefined && limit.memoryMb > 0 ? `${limit.memoryMb}m` : '0',
     };
+  }
+
+  /**
+   * The published image is a canary build whose `app.version` is the literal string 'canary', so
+   * the release tag is read from the git tree the image ships instead, falling back to whatever
+   * the panel calls itself.
+   */
+  override async version(): Promise<string | null> {
+    const described = await versionFromCommand(this.compose, this.serviceName, [
+      'git',
+      '-c',
+      'safe.directory=/app',
+      '-C',
+      '/app',
+      'describe',
+      '--tags',
+      '--always',
+    ]);
+    return described ?? (await laravelVersion(this.compose, this.serviceName));
   }
 
   async authenticate(): Promise<AuthContext> {

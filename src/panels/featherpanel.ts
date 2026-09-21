@@ -26,7 +26,14 @@ const DEFAULT_CREDENTIALS: FeatherPanelCredentials = {
   password: 'benchmark-password-123',
 };
 
-const DEFAULT_COMPOSE_FILE = path.resolve(import.meta.dirname, '..', '..', 'docker', 'featherpanel.compose.yml');
+const DEFAULT_COMPOSE_FILE = path.resolve(
+  import.meta.dirname,
+  '..',
+  '..',
+  'docker',
+  'panels',
+  'featherpanel.compose.yml',
+);
 
 export class FeatherPanelPanel extends DockerPanel {
   readonly name = 'featherpanel';
@@ -58,7 +65,7 @@ export class FeatherPanelPanel extends DockerPanel {
     }
     this.compose = {
       file: options.composeFile ?? DEFAULT_COMPOSE_FILE,
-      project: options.project ?? 'featherpanel-bench',
+      project: options.project ?? 'featherpanel-panel-bench',
       env,
     };
   }
@@ -72,6 +79,17 @@ export class FeatherPanelPanel extends DockerPanel {
       FEATHERPANEL_CPUS: String(limit.cpus),
       FEATHERPANEL_MEM: limit.memoryMb !== undefined && limit.memoryMb > 0 ? `${limit.memoryMb}m` : '0',
     };
+  }
+
+  override async version(): Promise<string | null> {
+    const response = await fetch(this.url('/api/system/settings'));
+    if (!response.ok) {
+      await response.arrayBuffer();
+      return null;
+    }
+    const body = (await response.json()) as { data?: { settings?: { app_version?: unknown } } };
+    const version = body.data?.settings?.app_version;
+    return typeof version === 'string' ? version : null;
   }
 
   async authenticate(): Promise<AuthContext> {

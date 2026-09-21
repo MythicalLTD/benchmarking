@@ -1,117 +1,165 @@
-import { spawn } from 'node:child_process';
+import { request } from 'node:http';
 import { setTimeout as sleep } from 'node:timers/promises';
 import type { ResourceUsage } from './types.ts';
+import { MIB } from './utils.ts';
+
+interface Snapshot {
+  readonly at: number;
+  readonly cpuNs: number;
+  readonly heapBytes: number;
+}
+
+interface StatsJson {
+  read?: string;
+  cpu_stats?: { cpu_usage?: { total_usage?: number } };
+  memory_stats?: { stats?: { anon?: number; shmem?: number } };
+}
+
+/**
+ * Docker stamps `read` at the instant it samples the cgroup counters. Timing intervals from our
+ * own clock instead would measure when the response callback got scheduled, which on a busy event
+ * loop skews short intervals badly enough to report rates above the container's CPU quota.
+ */
+function sampleTime(json: StatsJson): number {
+  const parsed = json.read !== undefined ? Date.parse(json.read) : Number.NaN;
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : Date.now();
+}
+
+function dockerSocketPath(): string {
+  const host = process.env.DOCKER_HOST;
+  if (host !== undefined && host.startsWith('unix://')) {
+    return host.slice('unix://'.length);
+  }
+  return '/var/run/docker.sock';
+}
+
+export function readContainerSnapshot(containerId: string): Promise<Snapshot | null> {
+  return new Promise((resolve) => {
+    const req = request(
+      {
+        socketPath: dockerSocketPath(),
+        path: `/containers/${containerId}/stats?stream=false&one-shot=true`,
+        method: 'GET',
+      },
+      (res) => {
+        let body = '';
+        res.setEncoding('utf8');
+        res.on('data', (chunk: string) => {
+          body += chunk;
+        });
+        res.on('end', () => {
+          if (res.statusCode !== 200) {
+            resolve(null);
+            return;
+          }
+          try {
+            const json = JSON.parse(body) as StatsJson;
+            const cpuNs = json.cpu_stats?.cpu_usage?.total_usage;
+            const anon = json.memory_stats?.stats?.anon;
+            if (cpuNs === undefined || anon === undefined) {
+              resolve(null);
+              return;
+            }
+            const shmem = json.memory_stats?.stats?.shmem ?? 0;
+            resolve({ at: sampleTime(json), cpuNs, heapBytes: anon + shmem });
+          } catch {
+            resolve(null);
+          }
+        });
+      },
+    );
+    req.on('error', () => resolve(null));
+    req.end();
+  });
+}
 
 export class ResourceSampler {
-  private readonly cpuSamples: number[] = [];
-  private readonly memSamples: number[] = [];
-  private running = false;
-  private loop: Promise<void> = Promise.resolve();
+  private readonly snapshots: Snapshot[] = [];
   private readonly containerId: string;
   private readonly intervalMs: number;
+  private readonly stopped = new AbortController();
+  private loop: Promise<void> = Promise.resolve();
 
   constructor(containerId: string, intervalMs = 500) {
     this.containerId = containerId;
     this.intervalMs = intervalMs;
   }
 
-  start(): void {
-    this.running = true;
+  /**
+   * Resolves once the opening snapshot is in, so the caller can start the work it wants measured
+   * without any of it falling outside the sampling window.
+   */
+  async start(): Promise<void> {
+    await this.take();
     this.loop = this.sampleUntilStopped();
   }
 
   async stop(): Promise<ResourceUsage | null> {
-    this.running = false;
+    this.stopped.abort();
     await this.loop;
-
-    if (this.cpuSamples.length === 0) {
-      return null;
-    }
-    return {
-      cpuPercentMean: mean(this.cpuSamples),
-      cpuPercentMax: Math.max(...this.cpuSamples),
-      memMbMean: mean(this.memSamples),
-      memMbMax: Math.max(...this.memSamples),
-      samples: this.cpuSamples.length,
-    };
+    await this.take();
+    return summarize(this.snapshots);
   }
 
   private async sampleUntilStopped(): Promise<void> {
-    while (this.running) {
-      const sample = await this.readOnce();
-      if (sample !== null) {
-        this.cpuSamples.push(sample.cpuPercent);
-        this.memSamples.push(sample.memMb);
+    while (!this.stopped.signal.aborted) {
+      try {
+        await sleep(this.intervalMs, undefined, { signal: this.stopped.signal });
+      } catch {
+        return;
       }
-      if (this.running) {
-        await sleep(this.intervalMs);
-      }
+      await this.take();
     }
   }
 
-  private readOnce(): Promise<{ cpuPercent: number; memMb: number } | null> {
-    return new Promise((resolve) => {
-      const child = spawn('docker', ['stats', '--no-stream', '--format', '{{json .}}', this.containerId], {
-        stdio: ['ignore', 'pipe', 'ignore'],
-      });
-
-      let stdout = '';
-      child.stdout.on('data', (chunk: Buffer) => {
-        stdout += chunk.toString();
-      });
-      child.on('error', () => resolve(null));
-      child.on('exit', () => resolve(parseStats(stdout)));
-    });
-  }
-}
-
-function parseStats(stdout: string): { cpuPercent: number; memMb: number } | null {
-  const line = stdout.trim().split('\n')[0];
-  if (!line) {
-    return null;
-  }
-  try {
-    const stats = JSON.parse(line) as { CPUPerc?: string; MemUsage?: string };
-    const cpuPercent = Number.parseFloat((stats.CPUPerc ?? '0').replace('%', ''));
-    const memMb = parseMemUsage(stats.MemUsage ?? '');
-    if (Number.isNaN(cpuPercent)) {
-      return null;
+  private async take(): Promise<void> {
+    const snapshot = await readContainerSnapshot(this.containerId);
+    if (snapshot !== null) {
+      this.snapshots.push(snapshot);
     }
-    return { cpuPercent, memMb };
-  } catch {
-    return null;
   }
 }
 
-function parseMemUsage(memUsage: string): number {
-  const used = memUsage.split('/')[0]?.trim() ?? '';
-  const match = used.match(/^([\d.]+)\s*([KMGT]?i?B)$/i);
-  if (!match) {
-    return 0;
+function summarize(snapshots: readonly Snapshot[]): ResourceUsage | null {
+  if (snapshots.length < 2) {
+    return null;
   }
-  const value = Number.parseFloat(match[1]!);
-  const unit = match[2]!.toUpperCase();
-  const toMb: Record<string, number> = {
-    B: 1 / (1024 * 1024),
-    KIB: 1 / 1024,
-    KB: 1 / 1024,
-    MIB: 1,
-    MB: 1,
-    GIB: 1024,
-    GB: 1024,
-    TIB: 1024 * 1024,
-    TB: 1024 * 1024,
+  const first = snapshots[0]!;
+  const last = snapshots[snapshots.length - 1]!;
+  const wallMs = last.at - first.at;
+  if (wallMs <= 0) {
+    return null;
+  }
+
+  let cpuPercentMax = 0;
+  let heapSum = 0;
+  let heapMax = 0;
+  // Snapshot 0 is taken before the measured work starts; it anchors the CPU delta but including
+  // its idle heap in the average would credit whichever target finished faster with a lower mean.
+  for (let i = 1; i < snapshots.length; i += 1) {
+    const current = snapshots[i]!;
+    const previous = snapshots[i - 1]!;
+    heapSum += current.heapBytes;
+    heapMax = Math.max(heapMax, current.heapBytes);
+    const intervalMs = current.at - previous.at;
+    if (intervalMs > 0) {
+      cpuPercentMax = Math.max(cpuPercentMax, cpuPercent(current.cpuNs - previous.cpuNs, intervalMs));
+    }
+  }
+
+  const measured = snapshots.length - 1;
+  const cpuMs = (last.cpuNs - first.cpuNs) / 1_000_000;
+  return {
+    cpuMs,
+    windowMs: wallMs,
+    cpuPercentMean: (cpuMs / wallMs) * 100,
+    cpuPercentMax,
+    heapMbMean: heapSum / measured / MIB,
+    heapMbMax: heapMax / MIB,
+    samples: snapshots.length,
   };
-  return value * (toMb[unit] ?? 1);
 }
 
-function mean(values: readonly number[]): number {
-  if (values.length === 0) {
-    return 0;
-  }
-  let sum = 0;
-  for (const value of values) {
-    sum += value;
-  }
-  return sum / values.length;
+function cpuPercent(cpuNs: number, wallMs: number): number {
+  return (cpuNs / 1_000_000 / wallMs) * 100;
 }

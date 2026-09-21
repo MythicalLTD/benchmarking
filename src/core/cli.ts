@@ -1,8 +1,9 @@
 import { parseArgs } from 'node:util';
-import { DEFAULT_SCENARIOS } from './suite.ts';
-import type { Operation, ResourceLimit, Scenario } from './types.ts';
+import { ARCHIVE_FORMATS, TREE_IDS } from './dataset.ts';
+import { KNOWN_LOAD_OPERATIONS, KNOWN_TASK_OPERATIONS, type ScenarioOptions } from './suite.ts';
+import type { ResourceLimit } from './types.ts';
 
-export interface CommonPanelOptions {
+export interface StackOptions {
   host?: string;
   port?: number;
   image?: string;
@@ -10,12 +11,19 @@ export interface CommonPanelOptions {
   service?: string;
 }
 
+export interface CommonDaemonOptions {
+  workdir?: string;
+  settleMs?: number;
+}
+
 export interface CliConfig {
   readonly target: string;
-  readonly panel: CommonPanelOptions;
+  readonly stack: StackOptions;
+  readonly daemon: CommonDaemonOptions;
   readonly variants?: readonly ResourceLimit[];
-  readonly scenarios?: readonly Scenario[];
+  readonly scenarioOptions: ScenarioOptions;
   readonly json: boolean;
+  readonly pull: boolean;
   readonly outputDir?: string;
   readonly compare?: string;
 }
@@ -24,48 +32,76 @@ export class CliError extends Error {}
 
 export const HELP_TEXT = `Usage: bench [target] [options]
 
-Targets:
-  calagopus (default)      Benchmark the Calagopus panel
-  pterodactyl              Benchmark the Pterodactyl panel
-  pelican                  Benchmark the Pelican panel
-  pufferpanel              Benchmark the PufferPanel panel
-  featherpanel             Benchmark the FeatherPanel panel
-  hydrodactyl              Benchmark the Hydrodactyl panel
-  all                      Benchmark every panel in series
+Panel targets (HTTP load against the panel API):
+  panel:calagopus (default)  Benchmark the Calagopus panel
+  panel:pterodactyl          Benchmark the Pterodactyl panel
+  panel:pelican              Benchmark the Pelican panel
+  panel:pufferpanel          Benchmark the PufferPanel panel
+  panel:featherpanel         Benchmark the FeatherPanel panel
+  panel:hydrodactyl          Benchmark the Hydrodactyl panel
+
+Daemon targets (Wings file API against a mocked panel):
+  daemon:calagopus           Benchmark Calagopus Wings
+  daemon:pterodactyl         Benchmark Pterodactyl Wings
+  daemon:pelican             Benchmark Pelican Wings
+
+Groups:
+  all                        Benchmark every target in series
+  panel:all                  Benchmark every panel in series
+  daemon:all                 Benchmark every daemon in series
 
 Comparison:
       --compare <target>   Also benchmark this target (in serial, after the
                            first) with the same load/variant settings, then
-                           print a comparison. Panel options apply to both runs.
-                           Cannot be combined with the 'all' target.
+                           print a comparison. Target options apply to both runs.
+                           Cannot be combined with group targets.
 
-Load shaping (applied to every scenario):
+Load shaping (applied to every load scenario):
   -c, --concurrency <n>    Concurrent connections
   -d, --duration <s>       Measurement window in seconds (mutually exclusive with --requests)
   -n, --requests <n>       Fixed request count instead of a timed window
-  -w, --warmup <s>         Warmup window in seconds (0 disables warmup)
-      --scenarios <list>   Only run these operations (comma-separated: health,account,listServers)
+  -w, --warmup <s>         Warmup window in seconds (0 disables warmup, also the
+                           discarded first run of task scenarios)
+      --scenarios <list>   Only run these operations (comma-separated, e.g.
+                           health,account,listServers or compress,deleteTree)
+
+Task shaping (applied to every task scenario):
+      --repetitions <n>    Measured runs per task scenario
+      --trees <list>       Only run archive/delete tasks on these tree fixtures
+                           (comma-separated, from 100m,1g,many). '100m' and '1g'
+                           are byte-dominated; 'many' is 50k small files, which
+                           isolates per-file overhead from raw throughput.
+      --formats <list>     Only run archive tasks with these formats
+                           (comma-separated, from tar.gz,zip)
 
 Resource sweep:
       --cpus <list>        CPU variants to sweep (comma-separated, e.g. 1,2,4)
       --memory <mb>        Memory limit in MB applied to every variant (0 = unlimited)
 
-Panel:
-      --host <host>        Panel host (default localhost)
-      --port <n>           Panel port (default random high port)
-      --image <ref>        Override the panel container image
+Target:
+      --no-pull            Skip 'docker compose pull'; run against the images already
+                           cached locally (useful offline, or to pin a comparison to
+                           the images a previous run used)
+      --host <host>        Target host (default localhost)
+      --port <n>           Target port (default random high port)
+      --image <ref>        Override the container image
       --project <name>     docker compose project name
       --service <name>     docker compose service name
+      --workdir <dir>      Daemon workdir for config, data and logs (default ./.bench;
+                           daemon targets only)
+      --settle <s>         Seconds to wait after a daemon is ready (default 10;
+                           daemon targets only)
 
 Output:
       --json               Emit the raw report as JSON on stdout (progress to stderr)
-  -o, --output-dir <dir>   Write each suite report to <dir>/<target>.json
-                           (pretty-printed; the directory is created if needed)
+  -o, --output-dir <dir>   Write each suite report to <dir>/<target>.json with the
+                           ':' replaced by '-' (pretty-printed; the directory is
+                           created if needed)
 
   -h, --help               Show this help
 `;
 
-const KNOWN_OPERATIONS: readonly Operation[] = ['health', 'login', 'account', 'listServers', 'websocketCredentials'];
+const KNOWN_OPERATIONS: readonly string[] = [...KNOWN_LOAD_OPERATIONS, ...KNOWN_TASK_OPERATIONS];
 
 export function parseCli(argv: readonly string[]): CliConfig | 'help' {
   let parsed: ReturnType<typeof parseArgs<{ options: typeof OPTIONS; allowPositionals: true }>>;
@@ -83,25 +119,16 @@ export function parseCli(argv: readonly string[]): CliConfig | 'help' {
     throw new CliError(`unexpected argument '${positionals[1]}'`);
   }
 
-  const target = positionals[0] ?? 'calagopus';
-  if (values.compare !== undefined && (target === 'all' || values.compare === 'all')) {
-    throw new CliError("--compare cannot be combined with the 'all' target");
-  }
-
-  const concurrency = optionalInt(values.concurrency, '--concurrency', { min: 1 });
-  const durationS = optionalInt(values.duration, '--duration', { min: 1 });
-  const requests = optionalInt(values.requests, '--requests', { min: 1 });
-  const warmupS = optionalInt(values.warmup, '--warmup', { min: 0 });
-  if (durationS !== undefined && requests !== undefined) {
-    throw new CliError('--duration and --requests are mutually exclusive');
-  }
+  const target = positionals[0] ?? 'panel:calagopus';
 
   let config: CliConfig = {
     target,
-    panel: parsePanel(values),
+    stack: parseStack(values),
+    daemon: parseDaemon(values),
     variants: parseVariants(values),
-    scenarios: buildScenarios({ concurrency, durationS, requests, warmupS, filter: values.scenarios }),
+    scenarioOptions: parseScenarioOptions(values),
     json: values.json === true,
+    pull: values['no-pull'] !== true,
   };
   if (values['output-dir'] !== undefined) {
     config = { ...config, outputDir: values['output-dir'] };
@@ -118,6 +145,9 @@ const OPTIONS = {
   requests: { type: 'string', short: 'n' },
   warmup: { type: 'string', short: 'w' },
   scenarios: { type: 'string' },
+  repetitions: { type: 'string' },
+  trees: { type: 'string' },
+  formats: { type: 'string' },
   cpus: { type: 'string' },
   memory: { type: 'string' },
   host: { type: 'string' },
@@ -125,33 +155,48 @@ const OPTIONS = {
   image: { type: 'string' },
   project: { type: 'string' },
   service: { type: 'string' },
+  workdir: { type: 'string' },
+  settle: { type: 'string' },
   compare: { type: 'string' },
   json: { type: 'boolean' },
+  'no-pull': { type: 'boolean' },
   'output-dir': { type: 'string', short: 'o' },
   help: { type: 'boolean', short: 'h' },
 } as const;
 
 type Values = ReturnType<typeof parseArgs<{ options: typeof OPTIONS; allowPositionals: true }>>['values'];
 
-function parsePanel(values: Values): CommonPanelOptions {
-  const panel: CommonPanelOptions = {};
+function parseStack(values: Values): StackOptions {
+  const stack: StackOptions = {};
   if (values.host !== undefined) {
-    panel.host = values.host;
+    stack.host = values.host;
   }
   const port = optionalInt(values.port, '--port', { min: 1, max: 65_535 });
   if (port !== undefined) {
-    panel.port = port;
+    stack.port = port;
   }
   if (values.image !== undefined) {
-    panel.image = values.image;
+    stack.image = values.image;
   }
   if (values.project !== undefined) {
-    panel.project = values.project;
+    stack.project = values.project;
   }
   if (values.service !== undefined) {
-    panel.service = values.service;
+    stack.service = values.service;
   }
-  return panel;
+  return stack;
+}
+
+function parseDaemon(values: Values): CommonDaemonOptions {
+  const daemon: CommonDaemonOptions = {};
+  if (values.workdir !== undefined) {
+    daemon.workdir = values.workdir;
+  }
+  const settleS = optionalInt(values.settle, '--settle', { min: 0 });
+  if (settleS !== undefined) {
+    daemon.settleMs = settleS * 1000;
+  }
+  return daemon;
 }
 
 function parseVariants(values: Values): readonly ResourceLimit[] | undefined {
@@ -177,64 +222,84 @@ function parseVariants(values: Values): readonly ResourceLimit[] | undefined {
   return cpus.map((cpu) => (memoryMb !== undefined ? { cpus: cpu, memoryMb } : { cpus: cpu }));
 }
 
-interface LoadOverrides {
-  readonly concurrency?: number;
-  readonly durationS?: number;
-  readonly requests?: number;
-  readonly warmupS?: number;
-  readonly filter?: string;
+function parseScenarioOptions(values: Values): ScenarioOptions {
+  const concurrency = optionalInt(values.concurrency, '--concurrency', { min: 1 });
+  const durationS = optionalInt(values.duration, '--duration', { min: 1 });
+  const requests = optionalInt(values.requests, '--requests', { min: 1 });
+  const warmupS = optionalInt(values.warmup, '--warmup', { min: 0 });
+  const repetitions = optionalInt(values.repetitions, '--repetitions', { min: 1 });
+  if (durationS !== undefined && requests !== undefined) {
+    throw new CliError('--duration and --requests are mutually exclusive');
+  }
+
+  const load: { concurrency?: number; durationMs?: number; requests?: number; warmupMs?: number } = {};
+  if (concurrency !== undefined) {
+    load.concurrency = concurrency;
+  }
+  if (durationS !== undefined) {
+    load.durationMs = durationS * 1000;
+  }
+  if (requests !== undefined) {
+    load.requests = requests;
+  }
+  if (warmupS !== undefined) {
+    load.warmupMs = warmupS * 1000;
+  }
+
+  const task: { repetitions?: number; warmup?: boolean } = {};
+  if (repetitions !== undefined) {
+    task.repetitions = repetitions;
+  }
+  if (warmupS !== undefined) {
+    task.warmup = warmupS > 0;
+  }
+
+  const options: {
+    filter?: ReadonlySet<string>;
+    trees?: ReadonlySet<string>;
+    formats?: ReadonlySet<string>;
+    load: typeof load;
+    task: typeof task;
+  } = { load, task };
+  if (values.scenarios !== undefined) {
+    options.filter = parseFilter(values.scenarios);
+  }
+  if (values.trees !== undefined) {
+    options.trees = new Set(parseList(values.trees, '--trees', TREE_IDS));
+  }
+  if (values.formats !== undefined) {
+    options.formats = new Set(parseList(values.formats, '--formats', ARCHIVE_FORMATS));
+  }
+  return options;
 }
 
-function buildScenarios(overrides: LoadOverrides): readonly Scenario[] | undefined {
-  const hasLoadOverride =
-    overrides.concurrency !== undefined ||
-    overrides.durationS !== undefined ||
-    overrides.requests !== undefined ||
-    overrides.warmupS !== undefined;
-  if (!hasLoadOverride && overrides.filter === undefined) {
-    return undefined;
+function parseList(raw: string, flag: string, allowed: readonly string[]): string[] {
+  const values = raw
+    .split(',')
+    .map((part) => part.trim())
+    .filter((part) => part !== '');
+  if (values.length === 0) {
+    throw new CliError(`${flag} requires at least one value`);
   }
-
-  const wanted = overrides.filter !== undefined ? parseFilter(overrides.filter) : null;
-  const scenarios = DEFAULT_SCENARIOS.filter((scenario) => wanted === null || wanted.has(scenario.operation));
-  if (scenarios.length === 0) {
-    throw new CliError(`--scenarios matched no operations (available: ${KNOWN_OPERATIONS.join(', ')})`);
+  for (const value of values) {
+    if (!allowed.includes(value)) {
+      throw new CliError(`unknown ${flag} value '${value}' (available: ${allowed.join(', ')})`);
+    }
   }
-
-  if (!hasLoadOverride) {
-    return scenarios;
-  }
-
-  return scenarios.map((scenario) => {
-    const load = { ...scenario.load };
-    if (overrides.concurrency !== undefined) {
-      load.concurrency = overrides.concurrency;
-    }
-    if (overrides.warmupS !== undefined) {
-      load.warmupMs = overrides.warmupS * 1000;
-    }
-    if (overrides.requests !== undefined) {
-      load.requests = overrides.requests;
-      load.durationMs = undefined;
-    } else if (overrides.durationS !== undefined) {
-      load.durationMs = overrides.durationS * 1000;
-      load.requests = undefined;
-    }
-    return { ...scenario, load };
-  });
+  return values;
 }
 
-function parseFilter(raw: string): Set<Operation> {
-  const wanted = new Set<Operation>();
+function parseFilter(raw: string): ReadonlySet<string> {
+  const wanted = new Set<string>();
   for (const part of raw.split(',')) {
     const name = part.trim();
     if (name === '') {
       continue;
     }
-    if (!KNOWN_OPERATIONS.includes(name as Operation)) {
+    if (!KNOWN_OPERATIONS.includes(name)) {
       throw new CliError(`unknown scenario operation '${name}' (available: ${KNOWN_OPERATIONS.join(', ')})`);
     }
-    wanted.add(name as Operation);
+    wanted.add(name);
   }
   if (wanted.size === 0) {
     throw new CliError('--scenarios requires at least one operation');

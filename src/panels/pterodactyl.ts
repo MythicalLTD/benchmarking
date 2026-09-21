@@ -1,7 +1,7 @@
 import path from 'node:path';
 import colors from 'ansi-colors';
 import { composeExec } from '../core/docker.ts';
-import { DockerPanel } from '../core/panel.ts';
+import { DockerPanel, laravelVersion } from '../core/panel.ts';
 import type { AuthContext, Operation, RequestSpec, ResourceLimit } from '../core/types.ts';
 import { cookieHeader, parseSetCookies, randomHighPort } from '../core/utils.ts';
 
@@ -27,7 +27,14 @@ const DEFAULT_CREDENTIALS: PterodactylCredentials = {
   password: 'benchmark-password-123',
 };
 
-const DEFAULT_COMPOSE_FILE = path.resolve(import.meta.dirname, '..', '..', 'docker', 'pterodactyl.compose.yml');
+const DEFAULT_COMPOSE_FILE = path.resolve(
+  import.meta.dirname,
+  '..',
+  '..',
+  'docker',
+  'panels',
+  'pterodactyl.compose.yml',
+);
 
 export class PterodactylPanel extends DockerPanel {
   readonly name = 'pterodactyl';
@@ -62,7 +69,7 @@ export class PterodactylPanel extends DockerPanel {
     }
     this.compose = {
       file: options.composeFile ?? DEFAULT_COMPOSE_FILE,
-      project: options.project ?? 'pterodactyl-bench',
+      project: options.project ?? 'pterodactyl-panel-bench',
       env,
     };
   }
@@ -76,6 +83,10 @@ export class PterodactylPanel extends DockerPanel {
       PTERODACTYL_CPUS: String(limit.cpus),
       PTERODACTYL_MEM: limit.memoryMb !== undefined && limit.memoryMb > 0 ? `${limit.memoryMb}m` : '0',
     };
+  }
+
+  override version(): Promise<string | null> {
+    return laravelVersion(this.compose, this.serviceName);
   }
 
   async authenticate(): Promise<AuthContext> {

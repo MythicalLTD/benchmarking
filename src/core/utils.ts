@@ -1,3 +1,5 @@
+export const MIB = 1024 * 1024;
+
 export function randomHighPort(): number {
   return 20000 + Math.floor(Math.random() * 40000);
 }

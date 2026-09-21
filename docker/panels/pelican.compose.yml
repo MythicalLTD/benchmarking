@@ -1,6 +1,6 @@
 services:
   panel:
-    image: ${PELICAN_IMAGE:-ghcr.io/pelican-dev/panel:latest}
+    image: ${PELICAN_IMAGE:-ghcr.io/pelican/panel:latest}
     restart: unless-stopped
     cpus: ${PELICAN_CPUS:-0}
     mem_limit: ${PELICAN_MEM:-0}

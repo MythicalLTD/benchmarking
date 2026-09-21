@@ -1,7 +1,7 @@
 import path from 'node:path';
 import colors from 'ansi-colors';
 import { composeExec } from '../core/docker.ts';
-import { DockerPanel } from '../core/panel.ts';
+import { DockerPanel, laravelVersion } from '../core/panel.ts';
 import type { AuthContext, Operation, RequestSpec, ResourceLimit } from '../core/types.ts';
 import { randomHighPort } from '../core/utils.ts';
 
@@ -30,7 +30,7 @@ const DEFAULT_CREDENTIALS: PelicanCredentials = {
 const API_KEY_IDENTIFIER = 'pacc_benchmark01';
 const API_KEY_TOKEN = 'benchmarkbenchmarkbenchmark12345';
 
-const DEFAULT_COMPOSE_FILE = path.resolve(import.meta.dirname, '..', '..', 'docker', 'pelican.compose.yml');
+const DEFAULT_COMPOSE_FILE = path.resolve(import.meta.dirname, '..', '..', 'docker', 'panels', 'pelican.compose.yml');
 
 export class PelicanPanel extends DockerPanel {
   readonly name = 'pelican';
@@ -65,7 +65,7 @@ export class PelicanPanel extends DockerPanel {
     }
     this.compose = {
       file: options.composeFile ?? DEFAULT_COMPOSE_FILE,
-      project: options.project ?? 'pelican-bench',
+      project: options.project ?? 'pelican-panel-bench',
       env,
     };
   }
@@ -79,6 +79,10 @@ export class PelicanPanel extends DockerPanel {
       PELICAN_CPUS: String(limit.cpus),
       PELICAN_MEM: limit.memoryMb !== undefined && limit.memoryMb > 0 ? `${limit.memoryMb}m` : '0',
     };
+  }
+
+  override version(): Promise<string | null> {
+    return laravelVersion(this.compose, this.serviceName);
   }
 
   async authenticate(): Promise<AuthContext> {

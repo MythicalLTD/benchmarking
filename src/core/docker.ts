@@ -16,6 +16,10 @@ export async function composeUp(config: ComposeConfig): Promise<void> {
   await run('docker', ['compose', '-p', config.project, '-f', config.file, 'up', '-d', '--wait'], config.env);
 }
 
+export async function composePull(config: ComposeConfig): Promise<void> {
+  await run('docker', ['compose', '-p', config.project, '-f', config.file, 'pull'], config.env);
+}
+
 export async function composeDown(config: ComposeConfig): Promise<void> {
   await run('docker', ['compose', '-p', config.project, '-f', config.file, 'down', '-v'], config.env);
 }
@@ -23,6 +27,21 @@ export async function composeDown(config: ComposeConfig): Promise<void> {
 export function composeExec(config: ComposeConfig, service: string, command: readonly string[]): Promise<ExecResult> {
   const args = ['compose', '-p', config.project, '-f', config.file, 'exec', '-T', service, ...command];
   return capture('docker', args, config.env);
+}
+
+export async function composeServices(config: ComposeConfig): Promise<readonly string[]> {
+  const result = await capture(
+    'docker',
+    ['compose', '-p', config.project, '-f', config.file, 'config', '--services'],
+    config.env,
+  );
+  if (result.code !== 0) {
+    return [];
+  }
+  return result.stdout
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
 }
 
 export async function composeContainerId(config: ComposeConfig, service: string): Promise<string | null> {
@@ -33,6 +52,15 @@ export async function composeContainerId(config: ComposeConfig, service: string)
   );
   const id = result.stdout.trim();
   return id.length > 0 ? id : null;
+}
+
+export async function networkExists(name: string): Promise<boolean> {
+  const result = await capture('docker', ['network', 'inspect', '--format', '{{.Id}}', name]);
+  return result.code === 0 && result.stdout.trim().length > 0;
+}
+
+export async function networkRemove(name: string): Promise<void> {
+  await capture('docker', ['network', 'rm', name]);
 }
 
 function run(command: string, args: readonly string[], env?: Readonly<Record<string, string>>): Promise<void> {

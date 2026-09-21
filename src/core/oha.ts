@@ -27,11 +27,18 @@ export interface Measurement {
   readonly latency: LatencyStats | null;
 }
 
-export async function runOha(spec: RequestSpec, load: LoadProfile): Promise<Measurement> {
+/**
+ * Runs the warmup pass. Kept separate from the measured run so callers can start resource sampling
+ * afterwards: the warmup is the cold pass, and folding it into the sampled window would overstate
+ * CPU per request by a target-dependent amount.
+ */
+export async function warmupOha(spec: RequestSpec, load: LoadProfile): Promise<void> {
   if (load.warmupMs !== undefined && load.warmupMs > 0) {
     await execOha(buildArgs(spec, { ...load, durationMs: load.warmupMs, requests: undefined }));
   }
+}
 
+export async function runOha(spec: RequestSpec, load: LoadProfile): Promise<Measurement> {
   const stdout = await execOha(buildArgs(spec, load));
   return parse(stdout);
 }
@@ -40,7 +47,9 @@ function buildArgs(spec: RequestSpec, load: LoadProfile): string[] {
   const args = ['--output-format', 'json', '--no-tui', '-c', String(Math.max(1, load.concurrency)), '-m', spec.method];
 
   if (load.durationMs !== undefined) {
-    args.push('-z', `${load.durationMs}ms`);
+    // Without this oha aborts every in-flight request when the deadline passes and reports exactly
+    // `concurrency` errors on every timed run, which would drown out genuine failures.
+    args.push('-z', `${load.durationMs}ms`, '--wait-ongoing-requests-after-deadline');
   } else if (load.requests !== undefined) {
     args.push('-n', String(load.requests));
   }

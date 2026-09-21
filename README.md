@@ -13,30 +13,61 @@ track the performance of Calagopus services under load.
 
 ## Usage
 
-Each panel is booted from its own Docker Compose stack, swept across a set of CPU-quota variants, and driven with [`oha`](https://github.com/hatoo/oha)
-while container CPU/memory are sampled. Requires `docker`, the `docker compose` plugin, and `oha` on `PATH`.
+Each target has its images pulled (`--no-pull` skips this and uses whatever is cached locally), is booted from its own Docker Compose stack, swept across a set of CPU-quota variants, and
+measured while container CPU and heap (anonymous + shared-anonymous memory, excluding page cache) are sampled. The version of the software under test is read from the running target and shown
+in the report header (and included in `--json` output as `version`). Requires `docker`, the `docker compose` plugin, and
+[`oha`](https://github.com/hatoo/oha) on `PATH`.
 
-Pick a target as the first argument (defaults to `calagopus`):
+There are two kinds of targets:
+
+- **Panels** (`panel:<name>`) are driven with `oha` HTTP load against their client API (settings, account, server list).
+- **Daemons** (`daemon:<name>`) are the Wings node agents. They boot against a tiny in-process mock of the panel remote API, so
+  the numbers isolate the daemon. Load scenarios (system info, list directory, file download, chmod) run through `oha`; task
+  scenarios (compress tree, decompress archive, delete tree, upload file) are timed operations on a generated dataset,
+  repeated a few times with the first run discarded as warmup. Each variant also records an idle CPU/heap baseline, sampled
+  while the daemon is up but taking no requests.
+
+Archive and delete tasks run against named tree fixtures rather than a single size axis, so throughput and per-file overhead can
+be told apart:
+
+| Tree   | Shape                                                | What it measures                       |
+| ------ | ---------------------------------------------------- | -------------------------------------- |
+| `100m` | ~2k files, mostly 1 MiB region files plus a 32 MiB jar | codec and IO throughput                |
+| `1g`   | ~22k files, 1 GiB total                               | throughput at a realistic server size  |
+| `many` | 50k × 256 B files, ~13 MiB total                      | per-file syscall and archive-entry cost |
+
+Pick a target as the first argument (defaults to `panel:calagopus`):
 
 ```sh
-pnpm run bench calagopus    # bench the Calagopus panel
-pnpm run bench pterodactyl  # bench the Pterodactyl panel
-pnpm run bench pelican      # bench the Pelican panel
-pnpm run bench pufferpanel  # bench the PufferPanel panel
-pnpm run bench featherpanel # bench the FeatherPanel panel
-pnpm run bench hydrodactyl  # bench the Hydrodactyl panel
-pnpm run bench all          # bench every panel in series
+pnpm run bench panel:calagopus    # bench the Calagopus panel
+pnpm run bench panel:pterodactyl  # bench the Pterodactyl panel
+pnpm run bench panel:pelican      # bench the Pelican panel
+pnpm run bench panel:pufferpanel  # bench the PufferPanel panel
+pnpm run bench panel:featherpanel # bench the FeatherPanel panel
+pnpm run bench panel:hydrodactyl  # bench the Hydrodactyl panel
 
-pnpm run bench pterodactyl --compare calagopus  # bench Pterodactyl and Calagopus in series, then compare results
-pnpm run bench pufferpanel --compare calagopus  # bench PufferPanel and Calagopus in series, then compare results
+pnpm run bench daemon:calagopus   # bench Calagopus Wings
+pnpm run bench daemon:pterodactyl # bench Pterodactyl Wings
+pnpm run bench daemon:pelican     # bench Pelican Wings
 
-pnpm run bench pterodactyl --compare pelican  # bench Pterodactyl and Pelican in series, then compare results (you will see a funny result)
+pnpm run bench panel:all          # bench every panel in series
+pnpm run bench daemon:all         # bench every daemon in series
+pnpm run bench all                # bench everything in series
 
-pnpm run bench all --output-dir results  # bench every panel and write results/<target>.json for each
+pnpm run bench panel:pterodactyl --compare panel:calagopus   # bench both in series, then compare results
+pnpm run bench daemon:pterodactyl --compare daemon:calagopus # same for the daemons
+
+pnpm run bench daemon:all --trees many --repetitions 10      # only the small-file tree, more measured runs per task
+pnpm run bench daemon:calagopus --formats tar.gz             # skip the zip archive tasks
+pnpm run bench all --output-dir results                      # write results/<kind>-<name>.json for each target
+pnpm run bench daemon:all --no-pull                          # skip the image pull (offline, or to pin to cached images)
 ```
 
-With `--output-dir <dir>` (short `-o`) each suite report is written to `<dir>/<target>.json`, pretty-printed, as soon as that suite finishes. The directory is created if it does not exist. This works for single, `--compare`, and `all` runs. When running `all`, a failing panel does not abort the sweep: the remaining panels still run, the failure is reported at the end, and the process exits non-zero.
+With `--output-dir <dir>` (short `-o`) each suite report is written to `<dir>/<target>.json` (with the `:` replaced by `-`),
+pretty-printed, as soon as that suite finishes. The directory is created if it does not exist. This works for single, `--compare`,
+and group runs. When running a group, a failing target does not abort the sweep: the remaining targets still run, the failure is
+reported at the end, and the process exits non-zero.
 
 ## Contributing
 
-You are free to contribute new panels, benchmarks, and improvements to the benchmarking suite. Please try to follow the existing code style and structure, and ensure that your contributions are tested.
+You are free to contribute new panels, daemons, benchmarks, and improvements to the benchmarking suite. Please try to follow the existing code style and structure, and ensure that your contributions are tested.
