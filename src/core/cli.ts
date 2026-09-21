@@ -85,7 +85,8 @@ Target:
                            cached locally (useful offline, or to pin a comparison to
                            the images a previous run used)
       --host <host>        Target host (default localhost)
-      --port <n>           Target port (default random high port)
+      --port <n>           Target port (default: a fixed per-target port from 20000-20999,
+                           moved forward on a conflict; an explicit port is never moved)
       --image <ref>        Override the container image
       --project <name>     docker compose project name
       --service <name>     docker compose service name

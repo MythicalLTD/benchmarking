@@ -1,5 +1,26 @@
 import { spawn } from 'node:child_process';
 
+/** Carries the child's stderr so callers can classify a failure instead of only reporting it. */
+export class CommandError extends Error {
+  readonly stderr: string;
+
+  constructor(message: string, stderr: string) {
+    super(message);
+    this.name = 'CommandError';
+    this.stderr = stderr;
+  }
+}
+
+/**
+ * Docker reports a contended host port two different ways: `address already in use` when a
+ * non-docker process holds it, and `port is already allocated` when another container does.
+ */
+const PORT_CONFLICT = /address already in use|port is already allocated/i;
+
+export function isPortConflict(error: unknown): boolean {
+  return error instanceof CommandError && PORT_CONFLICT.test(error.stderr);
+}
+
 export interface ComposeConfig {
   readonly file: string;
   readonly project: string;
@@ -65,9 +86,17 @@ export async function networkRemove(name: string): Promise<void> {
 
 function run(command: string, args: readonly string[], env?: Readonly<Record<string, string>>): Promise<void> {
   return new Promise((resolve, reject) => {
+    // stdout stays inherited: compose picks its progress renderer from stdout's TTY-ness, and
+    // writes the rendering itself to stderr, so stderr is teed rather than swallowed.
     const child = spawn(command, args as string[], {
-      stdio: 'inherit',
+      stdio: ['inherit', 'inherit', 'pipe'],
       env: { ...process.env, ...env },
+    });
+
+    let stderr = '';
+    child.stderr.on('data', (chunk: Buffer) => {
+      process.stderr.write(chunk);
+      stderr += chunk.toString();
     });
 
     child.on('error', reject);
@@ -75,7 +104,7 @@ function run(command: string, args: readonly string[], env?: Readonly<Record<str
       if (code === 0) {
         resolve();
       } else {
-        reject(new Error(`${command} ${args.join(' ')} exited with code ${code}`));
+        reject(new CommandError(`${command} ${args.join(' ')} exited with code ${code}`, stderr));
       }
     });
   });

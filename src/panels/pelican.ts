@@ -3,7 +3,7 @@ import colors from 'ansi-colors';
 import { composeExec } from '../core/docker.ts';
 import { DockerPanel, laravelVersion } from '../core/panel.ts';
 import type { AuthContext, Operation, RequestSpec, ResourceLimit } from '../core/types.ts';
-import { randomHighPort } from '../core/utils.ts';
+import { benchPort } from '../core/utils.ts';
 
 export interface PelicanCredentials {
   readonly username: string;
@@ -36,7 +36,7 @@ export class PelicanPanel extends DockerPanel {
   readonly name = 'pelican';
 
   private readonly host: string;
-  private readonly port: number;
+  private port: number;
   private readonly image?: string;
   private readonly credentials: PelicanCredentials;
   protected readonly serviceName: string;
@@ -51,7 +51,8 @@ export class PelicanPanel extends DockerPanel {
   constructor(options: PelicanPanelOptions = {}) {
     super();
     this.host = options.host ?? 'localhost';
-    this.port = options.port ?? randomHighPort();
+    this.port = options.port ?? benchPort(this.kind, this.name);
+    this.portPinned = options.port !== undefined;
     this.image = options.image;
     this.credentials = options.credentials ?? DEFAULT_CREDENTIALS;
     this.serviceName = options.service ?? 'panel';
@@ -72,6 +73,16 @@ export class PelicanPanel extends DockerPanel {
 
   get baseUrl(): string {
     return `http://${this.host}:${this.port}`;
+  }
+
+  protected get hostPort(): number {
+    return this.port;
+  }
+
+  protected rebindPort(port: number): void {
+    this.port = port;
+    this.compose.env.PELICAN_PORT = String(port);
+    this.compose.env.PELICAN_URL = this.baseUrl;
   }
 
   protected resourceEnv(limit: ResourceLimit): Record<string, string> {

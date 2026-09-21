@@ -3,7 +3,7 @@ import colors from 'ansi-colors';
 import { composeExec } from '../core/docker.ts';
 import { DockerPanel, versionFromCommand } from '../core/panel.ts';
 import type { AuthContext, Operation, RequestSpec, ResourceLimit } from '../core/types.ts';
-import { randomHighPort } from '../core/utils.ts';
+import { benchPort } from '../core/utils.ts';
 
 export interface CalagopusCredentials {
   readonly username: string;
@@ -33,7 +33,7 @@ export class CalagopusPanel extends DockerPanel {
   readonly name = 'calagopus';
 
   private readonly host: string;
-  private readonly port: number;
+  private port: number;
   private readonly image?: string;
   private readonly credentials: CalagopusCredentials;
   protected readonly serviceName: string;
@@ -48,7 +48,8 @@ export class CalagopusPanel extends DockerPanel {
   constructor(options: CalagopusPanelOptions = {}) {
     super();
     this.host = options.host ?? 'localhost';
-    this.port = options.port ?? randomHighPort();
+    this.port = options.port ?? benchPort(this.kind, this.name);
+    this.portPinned = options.port !== undefined;
     this.image = options.image;
     this.credentials = options.credentials ?? DEFAULT_CREDENTIALS;
     this.serviceName = options.service ?? 'web';
@@ -66,6 +67,15 @@ export class CalagopusPanel extends DockerPanel {
 
   get baseUrl(): string {
     return `http://${this.host}:${this.port}`;
+  }
+
+  protected get hostPort(): number {
+    return this.port;
+  }
+
+  protected rebindPort(port: number): void {
+    this.port = port;
+    this.compose.env.CALAGOPUS_PORT = String(port);
   }
 
   protected resourceEnv(limit: ResourceLimit): Record<string, string> {

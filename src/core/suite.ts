@@ -398,8 +398,8 @@ export class Suite {
     const dataset = runner !== null ? await runner.prepare(this.scenarioList) : null;
 
     this.stackUp = true;
-    await target.start(limit);
     try {
+      await target.start(limit);
       const containerId = await target.containerId();
       await this.readVersion(target, observer);
       const idle = await this.sampleIdle(containerId, observer);

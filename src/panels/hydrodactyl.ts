@@ -3,7 +3,7 @@ import colors from 'ansi-colors';
 import { composeExec } from '../core/docker.ts';
 import { DockerPanel, laravelVersion, versionFromCommand } from '../core/panel.ts';
 import type { AuthContext, Operation, RequestSpec, ResourceLimit } from '../core/types.ts';
-import { cookieHeader, parseSetCookies, randomHighPort } from '../core/utils.ts';
+import { benchPort, cookieHeader, parseSetCookies } from '../core/utils.ts';
 
 export interface HydrodactylCredentials {
   readonly username: string;
@@ -40,7 +40,7 @@ export class HydrodactylPanel extends DockerPanel {
   readonly name = 'hydrodactyl';
 
   private readonly host: string;
-  private readonly port: number;
+  private port: number;
   private readonly image?: string;
   private readonly credentials: HydrodactylCredentials;
   protected readonly serviceName: string;
@@ -55,7 +55,8 @@ export class HydrodactylPanel extends DockerPanel {
   constructor(options: HydrodactylPanelOptions = {}) {
     super();
     this.host = options.host ?? 'localhost';
-    this.port = options.port ?? randomHighPort();
+    this.port = options.port ?? benchPort(this.kind, this.name);
+    this.portPinned = options.port !== undefined;
     this.image = options.image;
     this.credentials = options.credentials ?? DEFAULT_CREDENTIALS;
     this.serviceName = options.service ?? 'panel';
@@ -76,6 +77,16 @@ export class HydrodactylPanel extends DockerPanel {
 
   get baseUrl(): string {
     return `http://${this.host}:${this.port}`;
+  }
+
+  protected get hostPort(): number {
+    return this.port;
+  }
+
+  protected rebindPort(port: number): void {
+    this.port = port;
+    this.compose.env.HYDRODACTYL_PORT = String(port);
+    this.compose.env.HYDRODACTYL_URL = this.baseUrl;
   }
 
   protected resourceEnv(limit: ResourceLimit): Record<string, string> {

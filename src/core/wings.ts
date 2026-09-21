@@ -38,7 +38,7 @@ import type {
   ScenarioParams,
   TaskScenario,
 } from './types.ts';
-import { randomHighPort } from './utils.ts';
+import { benchPort } from './utils.ts';
 
 export interface WingsDaemonOptions {
   readonly composeFile?: string;
@@ -97,7 +97,7 @@ export abstract class WingsDaemon extends DockerDaemon implements TaskRunner {
 
   private readonly flavor: WingsFlavor;
   private readonly host: string;
-  private readonly port: number;
+  private port: number;
   private readonly workdir: string;
   private readonly settleMs: number;
   private readonly mock: RemoteMock;
@@ -110,7 +110,8 @@ export abstract class WingsDaemon extends DockerDaemon implements TaskRunner {
     this.flavor = flavor;
     this.name = flavor.name;
     this.host = options.host ?? 'localhost';
-    this.port = options.port ?? randomHighPort();
+    this.port = options.port ?? benchPort(this.kind, this.name);
+    this.portPinned = options.port !== undefined;
     this.serviceName = options.service ?? 'wings';
     this.workdir = path.resolve(options.workdir ?? DEFAULT_WORKDIR, `daemon-${flavor.name}`);
     this.settleMs = options.settleMs ?? 10_000;
@@ -138,6 +139,15 @@ export abstract class WingsDaemon extends DockerDaemon implements TaskRunner {
 
   get baseUrl(): string {
     return `http://${this.host}:${this.port}`;
+  }
+
+  protected get hostPort(): number {
+    return this.port;
+  }
+
+  protected rebindPort(port: number): void {
+    this.port = port;
+    this.compose.env.WINGS_PORT = String(port);
   }
 
   get serverRoot(): string {

@@ -8,6 +8,7 @@ import {
   composePull,
   composeServices,
   composeUp,
+  isPortConflict,
 } from './docker.ts';
 import {
   type AuthContext,
@@ -20,6 +21,7 @@ import {
   type TaskScenario,
   UNAUTHENTICATED,
 } from './types.ts';
+import { PORT_ATTEMPTS, portAvailable } from './utils.ts';
 
 export interface TaskOutcome {
   readonly ok: boolean;
@@ -82,6 +84,13 @@ export abstract class DockerTarget extends Target {
 
   protected abstract resourceEnv(limit: ResourceLimit): Record<string, string>;
 
+  /** The host port the stack publishes, and the hook that moves it to `port` when it is contended. */
+  protected abstract get hostPort(): number;
+  protected abstract rebindPort(port: number): void;
+
+  /** An explicitly requested port is never moved: it usually implies a tunnel or firewall rule. */
+  protected portPinned = false;
+
   protected siblingServices: readonly string[] = [];
 
   async start(limit: ResourceLimit): Promise<void> {
@@ -108,13 +117,40 @@ export abstract class DockerTarget extends Target {
   }
 
   protected async bringUp(limit: ResourceLimit): Promise<void> {
+    const base = this.hostPort;
+    const attempts = this.portPinned ? 1 : PORT_ATTEMPTS;
+
+    for (let attempt = 0; attempt < attempts; attempt += 1) {
+      const last = attempt + 1 >= attempts;
+      if (!last && !(await portAvailable(this.hostPort))) {
+        console.log(colors.yellow(`  host port ${this.hostPort} is in use, moving to ${base + attempt + 1}`));
+        this.rebindPort(base + attempt + 1);
+        continue;
+      }
+      try {
+        await this.composeUpOnce(limit);
+        break;
+      } catch (error) {
+        if (last || !isPortConflict(error)) {
+          throw error;
+        }
+        // Compose reuses the healthy siblings and recreates only the published container, so the
+        // partially created stack is left in place rather than torn down between attempts.
+        console.log(colors.yellow(`  host port ${this.hostPort} was taken, retrying on ${base + attempt + 1}`));
+        this.rebindPort(base + attempt + 1);
+      }
+    }
+
+    console.log(colors.dim(`  waiting for ${this.label} at ${this.baseUrl}${this.healthPath}...`));
+    await this.waitUntilReady();
+    console.log(colors.dim(`  ${this.label} is ready`));
+  }
+
+  private async composeUpOnce(limit: ResourceLimit): Promise<void> {
     const config = { ...this.compose, env: { ...this.compose.env, ...this.resourceEnv(limit) } };
     this.siblingServices = (await composeServices(config)).filter((name) => name !== this.serviceName);
     console.log(colors.dim(`  bringing up compose stack (project '${config.project}', cpus=${limit.cpus})...`));
     await composeUp(config);
-    console.log(colors.dim(`  waiting for ${this.label} at ${this.baseUrl}${this.healthPath}...`));
-    await this.waitUntilReady();
-    console.log(colors.dim(`  ${this.label} is ready`));
   }
 
   protected readinessHeaders(): Record<string, string> {
