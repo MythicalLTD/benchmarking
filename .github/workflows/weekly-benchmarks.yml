@@ -2,8 +2,8 @@ name: Weekly benchmarks
 
 # Runs the whole suite once a week on GitHub-hosted runners and publishes the results to the
 # `results` branch of this repository:
-#   latest/benchmarks.json         every target of the newest run, with runner specs
-#   latest/<kind>-<name>.json      the raw suite report per target
+#   latest/benchmarks.json         every target of the newest run (median across rounds), with runner specs
+#   latest/raw/bench-<group>/      the per-round suite reports and runner info, as produced
 #   history/<YYYY-MM-DD>/...       the same files, kept per run
 #   index.json                     list of history entries
 # The FeatherPanel website reads latest/benchmarks.json at build time, so no cross-repo token
@@ -14,10 +14,14 @@ on:
     - cron: "17 3 * * 1" # Mondays 03:17 UTC
   workflow_dispatch:
     inputs:
-      targets:
-        description: "Space separated targets to run (empty = all)"
+      panel_rounds:
+        description: "How many times to run the whole panel group (median is published)"
         required: false
-        default: ""
+        default: "3"
+      daemon_rounds:
+        description: "How many times to run the whole daemon group (median is published)"
+        required: false
+        default: "1"
 
 concurrency:
   group: weekly-benchmarks
@@ -27,31 +31,28 @@ permissions:
   contents: read
 
 jobs:
-  plan:
-    name: Plan
-    runs-on: ubuntu-latest
-    outputs:
-      targets: ${{ steps.targets.outputs.targets }}
-    steps:
-      - id: targets
-        env:
-          REQUESTED: ${{ github.event.inputs.targets }}
-        run: |
-          all="panel:featherpanel panel:pterodactyl panel:pelican panel:calagopus panel:hydrodactyl daemon:featherwings daemon:pterodactyl daemon:pelican daemon:calagopus"
-          list="${REQUESTED:-$all}"
-          echo "targets=$(printf '%s\n' $list | jq -R . | jq -cs .)" >> "$GITHUB_OUTPUT"
-
   bench:
-    name: ${{ matrix.target }}
-    needs: plan
-    # One fresh runner per target keeps each job well inside the 6h limit and the ~14 GB disk:
-    # a daemon's fixtures are ~3.7 GB, and `all` on one machine would hold every set at once.
+    # Fairness: every panel runs on the same machine, one after another, and the same goes for every
+    # daemon. Panels are only compared with panels and daemons with daemons, so the two groups may use
+    # different runners. Rounds repeat the whole group (A, B, C, A, B, C, ...), which interleaves the
+    # targets so a noisy minute on the runner does not land on one target only; the published figure
+    # is the median across rounds.
+    name: ${{ matrix.group }}
     runs-on: ubuntu-latest
-    timeout-minutes: 330
+    timeout-minutes: 350
     strategy:
       fail-fast: false
       matrix:
-        target: ${{ fromJSON(needs.plan.outputs.targets) }}
+        include:
+          - group: panels
+            target: panel:all
+            rounds: ${{ github.event.inputs.panel_rounds || '3' }}
+            # Stop starting new rounds after this many minutes so the job ends inside the 6h limit.
+            budget: 240
+          - group: daemons
+            target: daemon:all
+            rounds: ${{ github.event.inputs.daemon_rounds || '1' }}
+            budget: 200
     steps:
       - name: Free disk space
         run: |
@@ -86,33 +87,39 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Run benchmark
-        id: run
-        env:
-          TARGET: ${{ matrix.target }}
-        run: pnpm run bench "$TARGET" --output-dir results --prune
-
       - name: Record runner info
-        if: always()
-        env:
-          TARGET: ${{ matrix.target }}
         run: |
           mkdir -p results
-          ci/runner-info.sh "$TARGET" "results/runner-${TARGET/:/-}.json"
-          cat "results/runner-${TARGET/:/-}.json"
+          ci/runner-info.sh "${{ matrix.group }}" results/runner.json
+          cat results/runner.json
 
-      - name: Artifact name
-        if: always()
-        id: name
+      - name: Run benchmark rounds
         env:
           TARGET: ${{ matrix.target }}
-        run: echo "name=bench-${TARGET/:/-}" >> "$GITHUB_OUTPUT"
+          ROUNDS: ${{ matrix.rounds }}
+          BUDGET_MIN: ${{ matrix.budget }}
+        run: |
+          start=$(date +%s)
+          status=0
+          for round in $(seq 1 "$ROUNDS"); do
+            if [ "$round" -gt 1 ] && [ $(( ($(date +%s) - start) / 60 )) -ge "$BUDGET_MIN" ]; then
+              echo "::warning::time budget reached, stopping after $((round - 1)) round(s)"
+              break
+            fi
+            echo "::group::round $round of $ROUNDS"
+            # Daemons prune fixtures as each target finishes, so only one ~3.7 GB set is on disk.
+            pnpm run bench "$TARGET" --output-dir "results/round-$round" --prune || status=$?
+            echo "::endgroup::"
+          done
+          # Image digests are only known once the images have been pulled.
+          ci/runner-info.sh "${{ matrix.group }}" results/runner.json
+          exit $status
 
       - name: Upload results
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: ${{ steps.name.outputs.name }}
+          name: bench-${{ matrix.group }}
           path: results/
           retention-days: 90
 
@@ -141,6 +148,10 @@ jobs:
           path: artifacts
 
       - name: Combine
+        env:
+          EXPECTED_TARGETS: >-
+            panel:featherpanel panel:pterodactyl panel:pelican panel:calagopus panel:hydrodactyl
+            daemon:featherwings daemon:pterodactyl daemon:pelican daemon:calagopus
         run: node ci/combine.mjs artifacts benchmarks.json
 
       - name: Push to the results branch
@@ -160,8 +171,9 @@ jobs:
           rm -rf latest "history/$day"
           mkdir -p latest "history/$day"
           cp ../benchmarks.json latest/benchmarks.json
-          find ../artifacts -name '*.json' ! -name 'runner-*' -exec cp {} latest/ \;
-          cp latest/*.json "history/$day/"
+          mkdir -p latest/raw
+          cp -r ../artifacts/. latest/raw/
+          cp -r latest/. "history/$day/"
           ls history | sort -r | jq -R . | jq -s '{history: .}' > index.json
           cat > README.md <<'MD'
           # Benchmark results

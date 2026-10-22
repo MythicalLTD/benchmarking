@@ -102,14 +102,21 @@ keeps only one daemon's set on disk at a time and costs a regeneration on the ne
 
 ## Weekly results (this fork)
 
-`.github/workflows/weekly-benchmarks.yml` runs on a cron (Mondays 03:17 UTC) and on manual dispatch. Each target gets its
-own `ubuntu-latest` runner (one target per job keeps every job far from the 6 hour limit and the runner's disk), with
-`pnpm run bench <target> --output-dir results --prune`. The runner's CPU model, core count, memory, kernel, Docker and
-`oha` versions, and the image digests that were pulled are stored next to each report. A final job merges everything into
-`latest/benchmarks.json` on the `results` branch and keeps a dated copy under `history/<date>/`.
+`.github/workflows/weekly-benchmarks.yml` runs on a cron (Mondays 03:17 UTC) and on manual dispatch, as two jobs on
+`ubuntu-latest`:
 
-GitHub-hosted runners are shared VMs whose CPU model can change between jobs, so treat single-run differences of a few
-percent as noise. The `cpus: 4` variant also uses the whole 4 vCPU runner, so it competes with `oha` itself.
+- **panels**: every panel target runs one after another on the same runner (`pnpm run bench panel:all --prune`), and the
+  whole group is repeated for 3 rounds by default (A, B, C, A, B, C, ...). The published numbers are the median across rounds.
+- **daemons**: every daemon target runs one after another on one runner (`pnpm run bench daemon:all --prune`), 1 round by
+  default because a daemon sweep takes hours; each task is already repeated inside the suite and reported as a median.
+
+Panels are only compared with panels and daemons with daemons, so every comparison on the site is between numbers taken on
+identical hardware in the same job. Each job records its runner's CPU model, core count, memory, kernel, Docker and `oha`
+versions and the pulled image digests (`runner.json`). A final job merges everything into `latest/benchmarks.json` on the
+`results` branch, keeps the raw per-round reports under `latest/raw/`, and stores a dated copy under `history/<date>/`.
+
+GitHub-hosted runners are shared VMs, so treat differences of a few
+percent between weeks as noise: the runner's CPU model can differ from one week to the next. The `cpus: 4` variant also uses the whole 4 vCPU runner, so it competes with `oha` itself.
 
 ## Contributing
 
