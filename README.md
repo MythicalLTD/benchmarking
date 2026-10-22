@@ -2,6 +2,12 @@
 
 # Benchmarking
 
+> **MythicalLTD fork.** This is a fork of [calagopus/benchmarking](https://github.com/calagopus/benchmarking) (MIT, © Calagopus),
+> maintained by MythicalSystems to publish weekly results on [featherpanel.com/benchmarks](https://featherpanel.com/benchmarks).
+> Differences from upstream: the PufferPanel target is removed, a `daemon:featherwings` target is added, and the
+> [`Weekly benchmarks`](.github/workflows/weekly-benchmarks.yml) workflow runs every target on GitHub-hosted runners each Monday and
+> pushes the JSON to the [`results`](https://github.com/MythicalLTD/benchmarking/tree/results) branch. All credit for the suite goes to the Calagopus authors.
+
 [![TypeScript](https://img.shields.io/badge/typescript-7-blue.svg?logo=typescript)](https://www.typescriptlang.org/)
 [![License](https://img.shields.io/github/license/calagopus/benchmarking?color=blue)](https://github.com/calagopus/benchmarking/blob/main/LICENSE)
 [![GitHub issues](https://img.shields.io/github/issues/calagopus/benchmarking)](https://github.com/calagopus/benchmarking/issues)
@@ -55,13 +61,13 @@ Pick a target as the first argument (defaults to `panel:calagopus`):
 pnpm run bench panel:calagopus    # bench the Calagopus panel
 pnpm run bench panel:pterodactyl  # bench the Pterodactyl panel
 pnpm run bench panel:pelican      # bench the Pelican panel
-pnpm run bench panel:pufferpanel  # bench the PufferPanel panel
 pnpm run bench panel:featherpanel # bench the FeatherPanel panel
 pnpm run bench panel:hydrodactyl  # bench the Hydrodactyl panel
 
 pnpm run bench daemon:calagopus   # bench Calagopus Wings
 pnpm run bench daemon:pterodactyl # bench Pterodactyl Wings
 pnpm run bench daemon:pelican     # bench Pelican Wings
+pnpm run bench daemon:featherwings # bench FeatherWings
 
 pnpm run bench panel:all          # bench every panel in series
 pnpm run bench daemon:all         # bench every daemon in series
@@ -93,6 +99,17 @@ always freed once a target finishes, as is the daemon log at the start of each v
 and Calagopus Wings writes a line per request, so an unattended sweep otherwise grows a log larger than the fixtures
 it is measuring. Pass `--prune` to also drop each daemon's fixtures and logs as soon as that target is done, which
 keeps only one daemon's set on disk at a time and costs a regeneration on the next run.
+
+## Weekly results (this fork)
+
+`.github/workflows/weekly-benchmarks.yml` runs on a cron (Mondays 03:17 UTC) and on manual dispatch. Each target gets its
+own `ubuntu-latest` runner (one target per job keeps every job far from the 6 hour limit and the runner's disk), with
+`pnpm run bench <target> --output-dir results --prune`. The runner's CPU model, core count, memory, kernel, Docker and
+`oha` versions, and the image digests that were pulled are stored next to each report. A final job merges everything into
+`latest/benchmarks.json` on the `results` branch and keeps a dated copy under `history/<date>/`.
+
+GitHub-hosted runners are shared VMs whose CPU model can change between jobs, so treat single-run differences of a few
+percent as noise. The `cpus: 4` variant also uses the whole 4 vCPU runner, so it competes with `oha` itself.
 
 ## Contributing
 

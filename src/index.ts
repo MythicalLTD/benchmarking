@@ -7,6 +7,7 @@ import { formatComparison, formatReport } from './core/report.ts';
 import type { Suite } from './core/suite.ts';
 import type { SuiteReport, TargetKind } from './core/types.ts';
 import { calagopusDaemonSuite } from './suites/daemons/calagopus.ts';
+import { featherwingsDaemonSuite } from './suites/daemons/featherwings.ts';
 import { pelicanDaemonSuite } from './suites/daemons/pelican.ts';
 import { pterodactylDaemonSuite } from './suites/daemons/pterodactyl.ts';
 import { calagopusSuite } from './suites/panels/calagopus.ts';
@@ -14,7 +15,6 @@ import { featherpanelSuite } from './suites/panels/featherpanel.ts';
 import { hydrodactylSuite } from './suites/panels/hydrodactyl.ts';
 import { pelicanSuite } from './suites/panels/pelican.ts';
 import { pterodactylSuite } from './suites/panels/pterodactyl.ts';
-import { pufferpanelSuite } from './suites/panels/pufferpanel.ts';
 
 type SuiteConfig = Pick<CliConfig, 'scenarioOptions' | 'variants' | 'pull'>;
 type PanelBuild = (options: CliConfig['stack'], config: SuiteConfig) => Suite;
@@ -24,7 +24,6 @@ const PANELS: Record<string, PanelBuild> = {
   calagopus: (panel, config) => calagopusSuite({ panel, ...config }),
   pterodactyl: (panel, config) => pterodactylSuite({ panel, ...config }),
   pelican: (panel, config) => pelicanSuite({ panel, ...config }),
-  pufferpanel: (panel, config) => pufferpanelSuite({ panel, ...config }),
   featherpanel: (panel, config) => featherpanelSuite({ panel, ...config }),
   hydrodactyl: (panel, config) => hydrodactylSuite({ panel, ...config }),
 };
@@ -33,6 +32,7 @@ const DAEMONS: Record<string, DaemonBuild> = {
   calagopus: (daemon, config) => calagopusDaemonSuite({ daemon, ...config }),
   pterodactyl: (daemon, config) => pterodactylDaemonSuite({ daemon, ...config }),
   pelican: (daemon, config) => pelicanDaemonSuite({ daemon, ...config }),
+  featherwings: (daemon, config) => featherwingsDaemonSuite({ daemon, ...config }),
 };
 
 interface TargetEntry {

@@ -16,6 +16,8 @@ services:
       - REDIS_PASSWORD=featherpanel
       - TRUST_PROXY_HEADERS=true
       - PANEL_DOCKER_DEPLOYMENT=true
+      # FrankenPHP worker mode, the default in the published image and in the official docker-compose.yml
+      - FRANKENPHP_WORKER=true
     ports:
       - "${FEATHERPANEL_PORT:-80}:80"
     depends_on:

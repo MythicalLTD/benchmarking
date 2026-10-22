@@ -37,7 +37,6 @@ Panel targets (HTTP load against the panel API):
   panel:calagopus (default)  Benchmark the Calagopus panel
   panel:pterodactyl          Benchmark the Pterodactyl panel
   panel:pelican              Benchmark the Pelican panel
-  panel:pufferpanel          Benchmark the PufferPanel panel
   panel:featherpanel         Benchmark the FeatherPanel panel
   panel:hydrodactyl          Benchmark the Hydrodactyl panel
 
@@ -45,6 +44,7 @@ Daemon targets (Wings file API against a mocked panel):
   daemon:calagopus           Benchmark Calagopus Wings
   daemon:pterodactyl         Benchmark Pterodactyl Wings
   daemon:pelican             Benchmark Pelican Wings
+  daemon:featherwings        Benchmark FeatherWings
 
 Groups:
   all                        Benchmark every target in series

@@ -1,9 +1,10 @@
 import { type ScenarioOptions, Suite, type SuiteObserver } from '../../core/suite.ts';
 import type { ResourceLimit, Scenario } from '../../core/types.ts';
-import { PufferPanel, type PufferPanelOptions } from '../../panels/pufferpanel.ts';
+import type { WingsDaemonOptions } from '../../core/wings.ts';
+import { FeatherWings } from '../../daemons/featherwings.ts';
 
-export interface PufferPanelSuiteOptions {
-  readonly panel?: PufferPanelOptions;
+export interface FeatherWingsDaemonSuiteOptions {
+  readonly daemon?: WingsDaemonOptions;
   readonly scenarios?: readonly Scenario[];
   readonly scenarioOptions?: ScenarioOptions;
   readonly variants?: readonly ResourceLimit[];
@@ -11,9 +12,9 @@ export interface PufferPanelSuiteOptions {
   readonly pull?: boolean;
 }
 
-export function pufferpanelSuite(options: PufferPanelSuiteOptions = {}): Suite {
+export function featherwingsDaemonSuite(options: FeatherWingsDaemonSuiteOptions = {}): Suite {
   return new Suite({
-    target: new PufferPanel(options.panel),
+    target: new FeatherWings(options.daemon),
     scenarios: options.scenarios,
     scenarioOptions: options.scenarioOptions,
     variants: options.variants,
