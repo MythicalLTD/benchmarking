@@ -26,6 +26,7 @@ import {
   UPLOAD_BYTES,
 } from './dataset.ts';
 import { networkExists, networkRemove } from './docker.ts';
+import { bestEffort, removePath } from './fsutil.ts';
 import { RemoteMock } from './remote-mock.ts';
 import type { TaskOutcome, TaskRunner } from './target.ts';
 import type {
@@ -192,7 +193,7 @@ export abstract class WingsDaemon extends DockerDaemon implements TaskRunner {
     // Wings appends to its log forever and never rotates it, and Calagopus writes a line per
     // request, so a repeated sweep grows the log past the fixtures it is measuring. Dropping it
     // as the variant starts bounds it to one variant's worth and still leaves it for a post-mortem.
-    await rm(path.join(this.workdir, 'log'), { recursive: true, force: true });
+    await removePath(path.join(this.workdir, 'log'));
     await Promise.all(
       ['etc', 'lib', 'log', 'tmp'].map((dir) => mkdir(path.join(this.workdir, dir), { recursive: true })),
     );
@@ -235,10 +236,11 @@ export abstract class WingsDaemon extends DockerDaemon implements TaskRunner {
    * is what makes a group sweep need tens of gigabytes.
    */
   override async release(): Promise<void> {
-    await cleanOutputs(this.serverRoot);
+    // Cleanup never decides whether a target passed: its measurements are already in the report.
+    await bestEffort('removing task outputs', () => cleanOutputs(this.serverRoot));
     if (this.prune) {
-      await rm(this.serverRoot, { recursive: true, force: true });
-      await rm(path.join(this.workdir, 'log'), { recursive: true, force: true });
+      await bestEffort('pruning fixtures', () => removePath(this.serverRoot));
+      await bestEffort('pruning logs', () => removePath(path.join(this.workdir, 'log')));
     }
   }
 
@@ -345,18 +347,18 @@ export abstract class WingsDaemon extends DockerDaemon implements TaskRunner {
         await removeMatching(root, (name) => name.startsWith(OUTPUT_PATHS.compressOutput) || isGeneratedArchive(name));
         break;
       case 'decompress':
-        await rm(path.join(root, OUTPUT_PATHS.extracted), { recursive: true, force: true });
+        await removePath(path.join(root, OUTPUT_PATHS.extracted));
         break;
       case 'deleteTree': {
         const tree = dataset.trees.get(treeParam(scenario));
-        await rm(path.join(root, OUTPUT_PATHS.deleteTree), { recursive: true, force: true });
+        await removePath(path.join(root, OUTPUT_PATHS.deleteTree));
         if (tree !== undefined) {
           await copyTree(tree.dir, path.join(root, OUTPUT_PATHS.deleteTree));
         }
         break;
       }
       case 'writeFile':
-        await rm(path.join(root, OUTPUT_PATHS.upload), { force: true });
+        await removePath(path.join(root, OUTPUT_PATHS.upload), { recursive: false });
         break;
       case 'listDirectory':
         // Nothing to restore, and no writeback to flush.
@@ -597,9 +599,7 @@ function verify(outcome: TaskOutcome, condition: boolean, detail: string): TaskO
 
 async function removeMatching(dir: string, predicate: (name: string) => boolean): Promise<void> {
   const entries = await readdir(dir);
-  await Promise.all(
-    entries.filter(predicate).map((name) => rm(path.join(dir, name), { recursive: true, force: true })),
-  );
+  await Promise.all(entries.filter(predicate).map((name) => removePath(path.join(dir, name))));
 }
 
 async function writeConfig(file: string, content: string): Promise<void> {

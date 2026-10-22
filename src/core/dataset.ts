@@ -6,6 +6,7 @@ import { Readable } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
 import { createGzip, deflateRawSync } from 'node:zlib';
 import colors from 'ansi-colors';
+import { removePath } from './fsutil.ts';
 import type { ArchiveFormat } from './types.ts';
 import { MIB } from './utils.ts';
 
@@ -131,7 +132,7 @@ export async function ensureDataset(root: string, request: DatasetRequest): Prom
   for (const profile of TREE_PROFILES.filter((candidate) => request.trees.has(candidate.id))) {
     const dir = path.join(root, treeDirName(profile.id));
     await component(root, treeDirName(profile.id), profile, async () => {
-      await rm(dir, { recursive: true, force: true });
+      await removePath(dir);
       await writeTree(dir, profile, new Xorshift(seedOf(profile.id)));
     });
     trees.set(profile.id, { dir, files: treeFiles(profile), bytes: treeBytes(profile) });
@@ -146,7 +147,7 @@ export async function ensureDataset(root: string, request: DatasetRequest): Prom
     const name = archiveFileName(treeId, format);
     const file = path.join(root, name);
     await component(root, name, { format, profile: treeProfile(treeId) }, async () => {
-      await rm(file, { force: true });
+      await removePath(file, { recursive: false });
       await createArchive(tree.dir, OUTPUT_PATHS.extracted, file, format);
     });
     archives.set(key, name);
@@ -155,7 +156,7 @@ export async function ensureDataset(root: string, request: DatasetRequest): Prom
   for (const entries of request.listSizes) {
     const dir = path.join(root, listDirName(entries));
     await component(root, listDirName(entries), { entries }, async () => {
-      await rm(dir, { recursive: true, force: true });
+      await removePath(dir);
       await writeFlat(dir, entries, new Xorshift(0x11f7 + entries));
     });
     lists.set(entries, listDirName(entries));
@@ -195,9 +196,7 @@ function isOutput(name: string): boolean {
 
 export async function cleanOutputs(root: string): Promise<void> {
   const entries = await readdir(root).catch(() => [] as string[]);
-  await Promise.all(
-    entries.filter(isOutput).map((name) => rm(path.join(root, name), { recursive: true, force: true })),
-  );
+  await Promise.all(entries.filter(isOutput).map((name) => removePath(path.join(root, name))));
 }
 
 /**

@@ -375,7 +375,9 @@ export class Suite {
         process.off(signal, onSignal);
       }
       // Never let a cleanup failure mask the error on its way out.
-      await target.release().catch((err: unknown) => console.error(colors.red('release failed:'), err));
+      await target
+        .release()
+        .catch((err: unknown) => console.warn(colors.yellow('warning: release failed, results are kept:'), err));
     }
   }
 
