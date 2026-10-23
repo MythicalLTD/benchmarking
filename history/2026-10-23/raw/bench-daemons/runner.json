@@ -1,0 +1,21 @@
+{
+  "target": "daemons",
+  "cpuModel": "AMD EPYC 7763 64-Core Processor",
+  "cores": 4,
+  "memoryBytes": 16766410752,
+  "diskFreeBytes": 120654622720,
+  "kernel": "6.17.0-1022-azure",
+  "arch": "x86_64",
+  "os": "ubuntu24",
+  "imageVersion": "20261012.334.1",
+  "runnerName": "GitHub Actions 1000017378",
+  "dockerVersion": "28.0.4",
+  "ohaVersion": "oha 1.16.0",
+  "images": [
+    "busybox:1.37@sha256:bdf57e528e45e4433820e045b29b4597825a1c9e38353532d90a01445013f82e",
+    "ghcr.io/calagopus/wings:latest@sha256:6a764e3d42a69cc68050a2016c60e33e7a3b41dd74873b1449100fb8309fbbb5",
+    "ghcr.io/mythicalltd/featherwings:latest@sha256:6f30d5c707845f9749f49e0a3b90e543c26ae40744dadb790699d044e4411b61",
+    "ghcr.io/pelican/wings:latest@sha256:cf62cae99329dde1a0507d144fc5fb0c5e9d6c8346e6987d67dc08bc323e5644",
+    "ghcr.io/pterodactyl/wings:latest@sha256:f3eb1fcca035ba94256d612e31315bf33db948693db1a9c4646ce398aefc2f1b"
+  ]
+}

@@ -1,0 +1,437 @@
+{
+  "target": "panel:calagopus",
+  "kind": "panel",
+  "version": "1.2.6",
+  "startedAt": "2026-10-23T00:03:15.169Z",
+  "notes": [
+    "the cpu/memory limit and the resource samples cover the 'web' container only: db run unlimited and unmeasured, so panels that push work into them get that work for free in these numbers"
+  ],
+  "variants": [
+    {
+      "limit": {
+        "cpus": 1
+      },
+      "idle": {
+        "cpuMs": 0.392,
+        "windowMs": 3009,
+        "cpuPercentMean": 0.013027583914921901,
+        "cpuPercentMax": 0.07021696252465483,
+        "heapMbMean": 59.64453125,
+        "heapMbMax": 59.64453125,
+        "samples": 7
+      },
+      "results": [
+        {
+          "kind": "load",
+          "scenario": {
+            "kind": "load",
+            "name": "settings (unauth)",
+            "operation": "health",
+            "auth": "unauthenticated",
+            "load": {
+              "concurrency": 32,
+              "durationMs": 10000,
+              "warmupMs": 1000
+            }
+          },
+          "ok": 67919,
+          "ratelimited": 0,
+          "failed": 0,
+          "errored": 0,
+          "elapsedMs": 10006.233433,
+          "throughput": 6787.66895203613,
+          "latency": {
+            "min": 0.194793,
+            "max": 13.736512,
+            "mean": 4.711079793194846,
+            "p50": 4.6995379999999995,
+            "p90": 5.0478950000000005,
+            "p95": 5.703028,
+            "p99": 6.411982
+          },
+          "statusCounts": {
+            "200": 67919
+          },
+          "resources": {
+            "cpuMs": 9987.789,
+            "windowMs": 10037,
+            "cpuPercentMean": 99.50970409484906,
+            "cpuPercentMax": 100.76468253968254,
+            "heapMbMean": 50.252734375,
+            "heapMbMax": 50.3515625,
+            "samples": 21
+          },
+          "cpuMsPerRequest": 0.14703516573274722
+        },
+        {
+          "kind": "load",
+          "scenario": {
+            "kind": "load",
+            "name": "account (auth)",
+            "operation": "account",
+            "auth": "authenticated",
+            "load": {
+              "concurrency": 32,
+              "durationMs": 10000,
+              "warmupMs": 1000
+            }
+          },
+          "ok": 0,
+          "ratelimited": 117471,
+          "failed": 0,
+          "errored": 0,
+          "elapsedMs": 10004.354405,
+          "throughput": 11741.98706328217,
+          "latency": {
+            "min": 0.13431200000000001,
+            "max": 10.54772,
+            "mean": 2.7228738202534934,
+            "p50": 2.8860729999999997,
+            "p90": 3.018852,
+            "p95": 3.082818,
+            "p99": 3.9342400000000004
+          },
+          "statusCounts": {
+            "429": 117471
+          },
+          "resources": {
+            "cpuMs": 9989.912,
+            "windowMs": 10044,
+            "cpuPercentMean": 99.46148944643568,
+            "cpuPercentMax": 100.50217391304348,
+            "heapMbMean": 48.285546875,
+            "heapMbMax": 48.3671875,
+            "samples": 21
+          },
+          "cpuMsPerRequest": 0.08503037779087252
+        },
+        {
+          "kind": "load",
+          "scenario": {
+            "kind": "load",
+            "name": "list servers (auth)",
+            "operation": "listServers",
+            "auth": "authenticated",
+            "load": {
+              "concurrency": 32,
+              "durationMs": 10000,
+              "warmupMs": 1000
+            }
+          },
+          "ok": 0,
+          "ratelimited": 117397,
+          "failed": 0,
+          "errored": 0,
+          "elapsedMs": 10005.152450000001,
+          "throughput": 11733.654293293652,
+          "latency": {
+            "min": 0.12254400000000001,
+            "max": 10.634611,
+            "mean": 2.724849910244797,
+            "p50": 2.892134,
+            "p90": 3.026877,
+            "p95": 3.085135,
+            "p99": 3.9469730000000003
+          },
+          "statusCounts": {
+            "429": 117397
+          },
+          "resources": {
+            "cpuMs": 9985.631,
+            "windowMs": 10045,
+            "cpuPercentMean": 99.40896963663513,
+            "cpuPercentMax": 100.48807157057654,
+            "heapMbMean": 48.282421875,
+            "heapMbMax": 48.3046875,
+            "samples": 21
+          },
+          "cpuMsPerRequest": 0.08504750870291188
+        }
+      ]
+    },
+    {
+      "limit": {
+        "cpus": 2
+      },
+      "idle": {
+        "cpuMs": 0.311,
+        "windowMs": 3004,
+        "cpuPercentMean": 0.010352862849533954,
+        "cpuPercentMax": 0.05467196819085487,
+        "heapMbMean": 61.69140625,
+        "heapMbMax": 61.69140625,
+        "samples": 7
+      },
+      "results": [
+        {
+          "kind": "load",
+          "scenario": {
+            "kind": "load",
+            "name": "settings (unauth)",
+            "operation": "health",
+            "auth": "unauthenticated",
+            "load": {
+              "concurrency": 32,
+              "durationMs": 10000,
+              "warmupMs": 1000
+            }
+          },
+          "ok": 118293,
+          "ratelimited": 0,
+          "failed": 0,
+          "errored": 0,
+          "elapsedMs": 10004.422424,
+          "throughput": 11824.070894509843,
+          "latency": {
+            "min": 0.208694,
+            "max": 10.24999,
+            "mean": 2.703027901718609,
+            "p50": 2.7097670000000003,
+            "p90": 3.8182340000000003,
+            "p95": 4.043303,
+            "p99": 4.624627
+          },
+          "statusCounts": {
+            "200": 118293
+          },
+          "resources": {
+            "cpuMs": 19269.177,
+            "windowMs": 10045,
+            "cpuPercentMean": 191.82854156296665,
+            "cpuPercentMax": 197.64277227722772,
+            "heapMbMean": 51.66796875,
+            "heapMbMax": 51.80859375,
+            "samples": 21
+          },
+          "cpuMsPerRequest": 0.1628848457214439
+        },
+        {
+          "kind": "load",
+          "scenario": {
+            "kind": "load",
+            "name": "account (auth)",
+            "operation": "account",
+            "auth": "authenticated",
+            "load": {
+              "concurrency": 32,
+              "durationMs": 10000,
+              "warmupMs": 1000
+            }
+          },
+          "ok": 0,
+          "ratelimited": 225693,
+          "failed": 0,
+          "errored": 0,
+          "elapsedMs": 10003.835991,
+          "throughput": 22560.645756592352,
+          "latency": {
+            "min": 0.12081199999999999,
+            "max": 10.970703,
+            "mean": 1.415933517167099,
+            "p50": 1.3805370000000001,
+            "p90": 2.087952,
+            "p95": 2.345415,
+            "p99": 2.994245
+          },
+          "statusCounts": {
+            "429": 225693
+          },
+          "resources": {
+            "cpuMs": 17470.236,
+            "windowMs": 10062,
+            "cpuPercentMean": 173.62587954680978,
+            "cpuPercentMax": 179.7327380952381,
+            "heapMbMean": 52.3373046875,
+            "heapMbMax": 53.6171875,
+            "samples": 21
+          },
+          "cpuMsPerRequest": 0.07740246394411913
+        },
+        {
+          "kind": "load",
+          "scenario": {
+            "kind": "load",
+            "name": "list servers (auth)",
+            "operation": "listServers",
+            "auth": "authenticated",
+            "load": {
+              "concurrency": 32,
+              "durationMs": 10000,
+              "warmupMs": 1000
+            }
+          },
+          "ok": 0,
+          "ratelimited": 226590,
+          "failed": 0,
+          "errored": 0,
+          "elapsedMs": 10003.938051000001,
+          "throughput": 22650.080282869196,
+          "latency": {
+            "min": 0.114382,
+            "max": 6.576707,
+            "mean": 1.4104322363563955,
+            "p50": 1.3770410000000002,
+            "p90": 2.072699,
+            "p95": 2.3262500000000004,
+            "p99": 2.944921
+          },
+          "statusCounts": {
+            "429": 226590
+          },
+          "resources": {
+            "cpuMs": 17416.844,
+            "windowMs": 10066,
+            "cpuPercentMean": 173.02646532882972,
+            "cpuPercentMax": 180.15168316831682,
+            "heapMbMean": 57.425,
+            "heapMbMax": 60.3984375,
+            "samples": 21
+          },
+          "cpuMsPerRequest": 0.07686041696820498
+        }
+      ]
+    },
+    {
+      "limit": {
+        "cpus": 4
+      },
+      "idle": {
+        "cpuMs": 0.03,
+        "windowMs": 3009,
+        "cpuPercentMean": 0.0009970089730807576,
+        "cpuPercentMax": 0.005964214711729622,
+        "heapMbMean": 61.7578125,
+        "heapMbMax": 61.7578125,
+        "samples": 7
+      },
+      "results": [
+        {
+          "kind": "load",
+          "scenario": {
+            "kind": "load",
+            "name": "settings (unauth)",
+            "operation": "health",
+            "auth": "unauthenticated",
+            "load": {
+              "concurrency": 32,
+              "durationMs": 10000,
+              "warmupMs": 1000
+            }
+          },
+          "ok": 146194,
+          "ratelimited": 0,
+          "failed": 0,
+          "errored": 0,
+          "elapsedMs": 10004.454157,
+          "throughput": 14612.891188842099,
+          "latency": {
+            "min": 0.199868,
+            "max": 24.254325,
+            "mean": 2.186769956140478,
+            "p50": 2.147515,
+            "p90": 3.2824590000000002,
+            "p95": 3.633621,
+            "p99": 4.496493
+          },
+          "statusCounts": {
+            "200": 146194
+          },
+          "resources": {
+            "cpuMs": 23801.289,
+            "windowMs": 10049,
+            "cpuPercentMean": 236.85231366305106,
+            "cpuPercentMax": 245.90156555772995,
+            "heapMbMean": 61.6931640625,
+            "heapMbMax": 63.15234375,
+            "samples": 21
+          },
+          "cpuMsPerRequest": 0.162805510558356
+        },
+        {
+          "kind": "load",
+          "scenario": {
+            "kind": "load",
+            "name": "account (auth)",
+            "operation": "account",
+            "auth": "authenticated",
+            "load": {
+              "concurrency": 32,
+              "durationMs": 10000,
+              "warmupMs": 1000
+            }
+          },
+          "ok": 0,
+          "ratelimited": 247256,
+          "failed": 0,
+          "errored": 0,
+          "elapsedMs": 10003.07052,
+          "throughput": 24718.010285505818,
+          "latency": {
+            "min": 0.109615,
+            "max": 7.006664,
+            "mean": 1.2924471235965944,
+            "p50": 1.225408,
+            "p90": 2.015972,
+            "p95": 2.315854,
+            "p99": 3.077349
+          },
+          "statusCounts": {
+            "429": 247256
+          },
+          "resources": {
+            "cpuMs": 19859.999,
+            "windowMs": 10066,
+            "cpuPercentMean": 197.29782435922908,
+            "cpuPercentMax": 202.64444444444445,
+            "heapMbMean": 57.1361328125,
+            "heapMbMax": 61.14453125,
+            "samples": 21
+          },
+          "cpuMsPerRequest": 0.08032120005612307
+        },
+        {
+          "kind": "load",
+          "scenario": {
+            "kind": "load",
+            "name": "list servers (auth)",
+            "operation": "listServers",
+            "auth": "authenticated",
+            "load": {
+              "concurrency": 32,
+              "durationMs": 10000,
+              "warmupMs": 1000
+            }
+          },
+          "ok": 0,
+          "ratelimited": 244888,
+          "failed": 0,
+          "errored": 0,
+          "elapsedMs": 10003.267459,
+          "throughput": 24480.800998644976,
+          "latency": {
+            "min": 0.115744,
+            "max": 9.747611999999998,
+            "mean": 1.304830874607955,
+            "p50": 1.232635,
+            "p90": 2.032187,
+            "p95": 2.34051,
+            "p99": 3.133332
+          },
+          "statusCounts": {
+            "429": 244888
+          },
+          "resources": {
+            "cpuMs": 19678.925,
+            "windowMs": 10070,
+            "cpuPercentMean": 195.4213008937438,
+            "cpuPercentMax": 201.42134387351777,
+            "heapMbMean": 61.5982421875,
+            "heapMbMax": 63.21484375,
+            "samples": 21
+          },
+          "cpuMsPerRequest": 0.08035846836593223
+        }
+      ]
+    }
+  ]
+}
