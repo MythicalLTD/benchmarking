@@ -8,6 +8,8 @@ import {
   composePull,
   composeServices,
   composeUp,
+  containerImage,
+  type ImageInfo,
   isPortConflict,
 } from './docker.ts';
 import {
@@ -75,6 +77,15 @@ export abstract class Target {
   notes(): readonly string[] {
     return [];
   }
+
+  /** Startup time of the last start(), see VariantReport.startupMs. */
+  lastStartupMs(): number | null {
+    return null;
+  }
+
+  async imageInfo(): Promise<ImageInfo | null> {
+    return null;
+  }
 }
 
 export interface ReadinessOptions {
@@ -97,6 +108,17 @@ export abstract class DockerTarget extends Target {
   protected portPinned = false;
 
   protected siblingServices: readonly string[] = [];
+
+  private startupMs: number | null = null;
+
+  override lastStartupMs(): number | null {
+    return this.startupMs;
+  }
+
+  override async imageInfo(): Promise<ImageInfo | null> {
+    const id = await this.containerId();
+    return id !== null ? containerImage(id).catch(() => null) : null;
+  }
 
   async start(limit: ResourceLimit): Promise<void> {
     await this.bringUp(limit);
@@ -122,6 +144,8 @@ export abstract class DockerTarget extends Target {
   }
 
   protected async bringUp(limit: ResourceLimit): Promise<void> {
+    this.startupMs = null;
+    const began = performance.now();
     const base = this.hostPort;
     const attempts = this.portPinned ? 1 : PORT_ATTEMPTS;
 
@@ -148,7 +172,8 @@ export abstract class DockerTarget extends Target {
 
     console.log(colors.dim(`  waiting for ${this.label} at ${this.baseUrl}${this.healthPath}...`));
     await this.waitUntilReady();
-    console.log(colors.dim(`  ${this.label} is ready`));
+    this.startupMs = performance.now() - began;
+    console.log(colors.dim(`  ${this.label} is ready after ${(this.startupMs / 1000).toFixed(1)}s`));
   }
 
   private async composeUpOnce(limit: ResourceLimit): Promise<void> {

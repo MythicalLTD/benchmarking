@@ -144,7 +144,7 @@ export class PterodactylPanel extends DockerPanel {
         return { method: 'GET', url: this.url('/api/client/account'), headers: this.authHeaders(auth) };
 
       case 'listServers':
-        return { method: 'GET', url: this.url('/api/client/servers'), headers: this.authHeaders(auth) };
+        return { method: 'GET', url: this.url('/api/client'), headers: this.authHeaders(auth) };
 
       case 'login':
       case 'websocketCredentials':

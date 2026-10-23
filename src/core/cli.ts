@@ -27,6 +27,7 @@ export interface CliConfig {
   readonly pull: boolean;
   readonly outputDir?: string;
   readonly compare?: string;
+  readonly reverse: boolean;
 }
 
 export class CliError extends Error {}
@@ -34,14 +35,12 @@ export class CliError extends Error {}
 export const HELP_TEXT = `Usage: bench [target] [options]
 
 Panel targets (HTTP load against the panel API):
-  panel:calagopus (default)  Benchmark the Calagopus panel
   panel:pterodactyl          Benchmark the Pterodactyl panel
   panel:pelican              Benchmark the Pelican panel
-  panel:featherpanel         Benchmark the FeatherPanel panel
+  panel:featherpanel (default) Benchmark the FeatherPanel panel
   panel:hydrodactyl          Benchmark the Hydrodactyl panel
 
 Daemon targets (Wings file API against a mocked panel):
-  daemon:calagopus           Benchmark Calagopus Wings
   daemon:pterodactyl         Benchmark Pterodactyl Wings
   daemon:pelican             Benchmark Pelican Wings
   daemon:featherwings        Benchmark FeatherWings
@@ -50,6 +49,7 @@ Groups:
   all                        Benchmark every target in series
   panel:all                  Benchmark every panel in series
   daemon:all                 Benchmark every daemon in series
+      --reverse            Run a group in reverse order (used on alternating rounds)
 
 Comparison:
       --compare <target>   Also benchmark this target (in serial, after the
@@ -127,7 +127,7 @@ export function parseCli(argv: readonly string[]): CliConfig | 'help' {
     throw new CliError(`unexpected argument '${positionals[1]}'`);
   }
 
-  const target = positionals[0] ?? 'panel:calagopus';
+  const target = positionals[0] ?? 'panel:featherpanel';
 
   let config: CliConfig = {
     target,
@@ -137,6 +137,7 @@ export function parseCli(argv: readonly string[]): CliConfig | 'help' {
     scenarioOptions: parseScenarioOptions(values),
     json: values.json === true,
     pull: values['no-pull'] !== true,
+    reverse: values.reverse === true,
   };
   if (values['output-dir'] !== undefined) {
     config = { ...config, outputDir: values['output-dir'] };
@@ -169,6 +170,7 @@ const OPTIONS = {
   compare: { type: 'string' },
   json: { type: 'boolean' },
   'no-pull': { type: 'boolean' },
+  reverse: { type: 'boolean' },
   'output-dir': { type: 'string', short: 'o' },
   help: { type: 'boolean', short: 'h' },
 } as const;

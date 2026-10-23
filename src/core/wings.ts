@@ -190,7 +190,7 @@ export abstract class WingsDaemon extends DockerDaemon implements TaskRunner {
   }
 
   async start(limit: ResourceLimit): Promise<void> {
-    // Wings appends to its log forever and never rotates it, and Calagopus writes a line per
+    // Wings appends to its log forever and never rotates it, and some forks write a line per
     // request, so a repeated sweep grows the log past the fixtures it is measuring. Dropping it
     // as the variant starts bounds it to one variant's worth and still leaves it for a post-mortem.
     await removePath(path.join(this.workdir, 'log'));

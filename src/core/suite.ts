@@ -328,6 +328,7 @@ export class Suite {
   private readonly shouldPull: boolean;
   private stackUp = false;
   private version: string | null = null;
+  private imageReport: SuiteReport['image'] = null;
 
   constructor(options: SuiteOptions) {
     this.target = options.target;
@@ -368,6 +369,7 @@ export class Suite {
         version: this.version,
         startedAt,
         notes: target.notes(),
+        image: this.imageReport,
         variants,
       };
     } finally {
@@ -404,8 +406,12 @@ export class Suite {
     this.stackUp = true;
     try {
       await target.start(limit);
+      const startupMs = target.lastStartupMs();
       const containerId = await target.containerId();
       await this.readVersion(target, observer);
+      if (this.imageReport === null) {
+        this.imageReport = await target.imageInfo().catch(() => null);
+      }
       const idle = await this.sampleIdle(containerId, observer);
       const needsAuth = this.scenarioList.some((scenario) => scenario.auth === 'authenticated');
       const authenticated = needsAuth ? await target.authenticate() : UNAUTHENTICATED;
@@ -421,7 +427,7 @@ export class Suite {
           results.push(result);
         }
       }
-      return { limit, idle, results };
+      return { limit, startupMs, idle, results };
     } finally {
       await target.stop();
       this.stackUp = false;

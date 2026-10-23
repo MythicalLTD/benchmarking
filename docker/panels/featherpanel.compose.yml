@@ -18,6 +18,11 @@ services:
       - PANEL_DOCKER_DEPLOYMENT=true
       # FrankenPHP worker mode, the default in the published image and in the official docker-compose.yml
       - FRANKENPHP_WORKER=true
+    volumes:
+      # Benchmark only: API rate limiting off through FeatherPanel's own config file
+      # (storage/config/ratelimit.json, the file the admin rate-limit page writes). Read-only so
+      # the panel cannot rewrite it during the run. See README "Rate limiting".
+      - ./featherpanel-ratelimit.json:/var/www/html/storage/config/ratelimit.json:ro
     ports:
       - "${FEATHERPANEL_PORT:-80}:80"
     depends_on:

@@ -21,7 +21,7 @@ on:
       daemon_rounds:
         description: "How many times to run the whole daemon group (median is published)"
         required: false
-        default: "1"
+        default: "3"
 
 concurrency:
   group: weekly-benchmarks
@@ -34,9 +34,10 @@ jobs:
   bench:
     # Fairness: every panel runs on the same machine, one after another, and the same goes for every
     # daemon. Panels are only compared with panels and daemons with daemons, so the two groups may use
-    # different runners. Rounds repeat the whole group (A, B, C, A, B, C, ...), which interleaves the
-    # targets so a noisy minute on the runner does not land on one target only; the published figure
-    # is the median across rounds.
+    # different runners. Rounds repeat the whole group in alternating order (A, B, C, then C, B, A,
+    # then A, B, C), so no target always runs first on a fresh runner or last on a warm one, and a
+    # noisy minute does not land on one target only. The published figure is the median across rounds.
+    # Every panel runs with its API rate limiting switched off through config (see README).
     name: ${{ matrix.group }}
     runs-on: ubuntu-latest
     timeout-minutes: 350
@@ -51,8 +52,8 @@ jobs:
             budget: 240
           - group: daemons
             target: daemon:all
-            rounds: ${{ github.event.inputs.daemon_rounds || '1' }}
-            budget: 200
+            rounds: ${{ github.event.inputs.daemon_rounds || '3' }}
+            budget: 230
     steps:
       - name: Free disk space
         run: |
@@ -108,7 +109,9 @@ jobs:
             fi
             echo "::group::round $round of $ROUNDS"
             # Daemons prune fixtures as each target finishes, so only one ~3.7 GB set is on disk.
-            pnpm run bench "$TARGET" --output-dir "results/round-$round" --prune || status=$?
+            order=""
+            if [ $(( round % 2 )) -eq 0 ]; then order="--reverse"; fi
+            pnpm run bench "$TARGET" $order --output-dir "results/round-$round" --prune || status=$?
             echo "::endgroup::"
           done
           # Image digests are only known once the images have been pulled.
@@ -150,9 +153,16 @@ jobs:
       - name: Combine
         env:
           EXPECTED_TARGETS: >-
-            panel:featherpanel panel:pterodactyl panel:pelican panel:calagopus panel:hydrodactyl
-            daemon:featherwings daemon:pterodactyl daemon:pelican daemon:calagopus
-        run: node ci/combine.mjs artifacts benchmarks.json
+            panel:featherpanel panel:pterodactyl panel:pelican panel:hydrodactyl
+            daemon:featherwings daemon:pterodactyl daemon:pelican
+        run: |
+          node ci/combine.mjs artifacts benchmarks.json
+          # Rate limiting is off for every panel; a 429 here means a limit was missed, so say so loudly.
+          jq -r '.targets | to_entries[] | select(.value.report != null)
+            | "\(.key) \([.value.report.variants[].results[] | .ratelimited // 0] | add)"' benchmarks.json \
+            | while read -r target n; do
+                if [ "$n" != "0" ]; then echo "::warning::$target got $n rate-limited (429) responses"; fi
+              done
 
       - name: Push to the results branch
         run: |

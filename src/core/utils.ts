@@ -8,12 +8,10 @@ const PORT_STRIDE = 10;
 const PORT_SLOTS = 100;
 
 const PORT_SLOT_TABLE: Readonly<Record<string, number>> = {
-  'panel:calagopus': 0,
   'panel:pterodactyl': 1,
   'panel:pelican': 2,
   'panel:featherpanel': 4,
   'panel:hydrodactyl': 5,
-  'daemon:calagopus': 6,
   'daemon:pterodactyl': 7,
   'daemon:pelican': 8,
   'daemon:featherwings': 9,

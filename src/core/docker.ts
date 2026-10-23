@@ -75,6 +75,34 @@ export async function composeContainerId(config: ComposeConfig, service: string)
   return id.length > 0 ? id : null;
 }
 
+export interface ImageInfo {
+  /** The image reference the container was created from, as written in the compose file. */
+  readonly ref: string | null;
+  /** Content-addressed image id (`sha256:...`). */
+  readonly id: string | null;
+  /** Uncompressed size on disk, as `docker image inspect` reports it. */
+  readonly sizeBytes: number | null;
+}
+
+/** Image of a running container. Null when docker cannot answer; never fatal to a run. */
+export async function containerImage(containerId: string): Promise<ImageInfo | null> {
+  const container = await capture('docker', ['inspect', '--format', '{{.Image}} {{.Config.Image}}', containerId]);
+  if (container.code !== 0) {
+    return null;
+  }
+  const [id, ref] = container.stdout.trim().split(/\s+/);
+  if (id === undefined || id.length === 0) {
+    return null;
+  }
+  const image = await capture('docker', ['image', 'inspect', '--format', '{{.Size}}', id]);
+  const size = Number(image.stdout.trim());
+  return {
+    ref: ref ?? null,
+    id,
+    sizeBytes: image.code === 0 && Number.isFinite(size) && size > 0 ? size : null,
+  };
+}
+
 export async function networkExists(name: string): Promise<boolean> {
   const result = await capture('docker', ['network', 'inspect', '--format', '{{.Id}}', name]);
   return result.code === 0 && result.stdout.trim().length > 0;

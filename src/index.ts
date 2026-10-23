@@ -6,11 +6,9 @@ import { ensureDependencies } from './core/preflight.ts';
 import { formatComparison, formatReport } from './core/report.ts';
 import type { Suite } from './core/suite.ts';
 import type { SuiteReport, TargetKind } from './core/types.ts';
-import { calagopusDaemonSuite } from './suites/daemons/calagopus.ts';
 import { featherwingsDaemonSuite } from './suites/daemons/featherwings.ts';
 import { pelicanDaemonSuite } from './suites/daemons/pelican.ts';
 import { pterodactylDaemonSuite } from './suites/daemons/pterodactyl.ts';
-import { calagopusSuite } from './suites/panels/calagopus.ts';
 import { featherpanelSuite } from './suites/panels/featherpanel.ts';
 import { hydrodactylSuite } from './suites/panels/hydrodactyl.ts';
 import { pelicanSuite } from './suites/panels/pelican.ts';
@@ -21,7 +19,6 @@ type PanelBuild = (options: CliConfig['stack'], config: SuiteConfig) => Suite;
 type DaemonBuild = (options: CliConfig['stack'] & CliConfig['daemon'], config: SuiteConfig) => Suite;
 
 const PANELS: Record<string, PanelBuild> = {
-  calagopus: (panel, config) => calagopusSuite({ panel, ...config }),
   pterodactyl: (panel, config) => pterodactylSuite({ panel, ...config }),
   pelican: (panel, config) => pelicanSuite({ panel, ...config }),
   featherpanel: (panel, config) => featherpanelSuite({ panel, ...config }),
@@ -29,7 +26,6 @@ const PANELS: Record<string, PanelBuild> = {
 };
 
 const DAEMONS: Record<string, DaemonBuild> = {
-  calagopus: (daemon, config) => calagopusDaemonSuite({ daemon, ...config }),
   pterodactyl: (daemon, config) => pterodactylDaemonSuite({ daemon, ...config }),
   pelican: (daemon, config) => pelicanDaemonSuite({ daemon, ...config }),
   featherwings: (daemon, config) => featherwingsDaemonSuite({ daemon, ...config }),
@@ -64,7 +60,9 @@ function suiteConfig(config: CliConfig): SuiteConfig {
 function resolveTargets(config: CliConfig): string[] {
   const group = GROUPS[config.target];
   if (group !== undefined) {
-    return [...TARGETS.entries()].filter(([, entry]) => group(entry)).map(([name]) => name);
+    const names = [...TARGETS.entries()].filter(([, entry]) => group(entry)).map(([name]) => name);
+    // Alternating rounds run the group back to front, so no target always goes first or last.
+    return config.reverse ? names.reverse() : names;
   }
   return config.compare !== undefined ? [config.target, config.compare] : [config.target];
 }
@@ -77,6 +75,9 @@ async function main(): Promise<void> {
   }
 
   const runGroup = GROUPS[parsed.target] !== undefined;
+  if (parsed.reverse && !runGroup) {
+    throw new CliError('--reverse only applies to group targets');
+  }
   if (parsed.compare !== undefined && (runGroup || GROUPS[parsed.compare] !== undefined)) {
     throw new CliError('--compare cannot be combined with group targets');
   }

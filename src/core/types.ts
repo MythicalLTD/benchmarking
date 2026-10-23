@@ -141,6 +141,12 @@ export type ScenarioResult = LoadResult | TaskResult;
 
 export interface VariantReport {
   readonly limit: ResourceLimit;
+  /**
+   * Wall time from `docker compose up` to the first successful readiness probe, with this variant's
+   * limits applied. Includes database migrations and seeding the image does on boot; excludes the
+   * image pull and the daemons' fixed settle wait.
+   */
+  readonly startupMs: number | null;
   readonly idle: ResourceUsage | null;
   readonly results: readonly ScenarioResult[];
 }
@@ -151,5 +157,7 @@ export interface SuiteReport {
   readonly version: string | null;
   readonly startedAt: string;
   readonly notes: readonly string[];
+  /** Image of the measured container (the one the cpu/memory limit applies to). */
+  readonly image: { readonly ref: string | null; readonly id: string | null; readonly sizeBytes: number | null } | null;
   readonly variants: readonly VariantReport[];
 }
