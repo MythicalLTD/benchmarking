@@ -1,0 +1,2653 @@
+{
+  "target": "daemon:pelican",
+  "kind": "daemon",
+  "version": "1.0.0-rc.1",
+  "startedAt": "2026-10-23T09:46:48.904Z",
+  "notes": [
+    "compress uses single-threaded pgzip; decompress checks archive size before extracting",
+    "archive tasks run warm: the warmup run pulls the tree into page cache, so they compare codecs rather than cold-disk reads",
+    "decompress is benchmarked for formats a daemon cannot create, so zip decompress is comparable even where zip compress is not",
+    "large directory listings are timed one at a time rather than driven by a load generator, and run warm: the warmup run pulls the entries and inodes into cache, so they compare readdir/stat and serialisation rather than cold metadata reads"
+  ],
+  "image": {
+    "ref": "ghcr.io/pelican/wings:latest",
+    "id": "sha256:58b66ced3e40831e611416cb31b41ccc4e4169c5a45b4443e1e9d51fe64d064a",
+    "sizeBytes": 42938865
+  },
+  "variants": [
+    {
+      "limit": {
+        "cpus": 1
+      },
+      "startupMs": 3515.863812000025,
+      "idle": {
+        "cpuMs": 0,
+        "windowMs": 3005,
+        "cpuPercentMean": 0,
+        "cpuPercentMax": 0,
+        "heapMbMean": 23.04296875,
+        "heapMbMax": 23.04296875,
+        "samples": 7
+      },
+      "results": [
+        {
+          "kind": "load",
+          "scenario": {
+            "kind": "load",
+            "name": "system info",
+            "operation": "system",
+            "auth": "authenticated",
+            "load": {
+              "concurrency": 32,
+              "durationMs": 10000,
+              "warmupMs": 1000
+            }
+          },
+          "ok": 4658,
+          "ratelimited": 0,
+          "failed": 0,
+          "errored": 0,
+          "elapsedMs": 10062.736808,
+          "throughput": 462.8959386373727,
+          "latency": {
+            "min": 20.83836,
+            "max": 138.978399,
+            "mean": 69.05610254014594,
+            "p50": 70.969878,
+            "p90": 88.277119,
+            "p95": 95.299384,
+            "p99": 108.340518
+          },
+          "statusCounts": {
+            "200": 4658
+          },
+          "resources": {
+            "cpuMs": 5357.766,
+            "windowMs": 10095,
+            "cpuPercentMean": 53.073462109955415,
+            "cpuPercentMax": 55.83249027237353,
+            "heapMbMean": 15.4162109375,
+            "heapMbMax": 16.4609375,
+            "samples": 21
+          },
+          "cpuMsPerRequest": 1.1502288535852296
+        },
+        {
+          "kind": "load",
+          "scenario": {
+            "kind": "load",
+            "name": "list directory (50 entries)",
+            "operation": "listDirectory",
+            "auth": "authenticated",
+            "load": {
+              "concurrency": 32,
+              "durationMs": 10000,
+              "warmupMs": 1000
+            },
+            "params": {
+              "entries": 50
+            }
+          },
+          "ok": 6244,
+          "ratelimited": 0,
+          "failed": 0,
+          "errored": 0,
+          "elapsedMs": 10053.88588,
+          "throughput": 621.0533991062171,
+          "latency": {
+            "min": 1.249149,
+            "max": 375.154922,
+            "mean": 51.451256036835474,
+            "p50": 31.565450000000002,
+            "p90": 102.96267200000001,
+            "p95": 126.893056,
+            "p99": 191.672214
+          },
+          "statusCounts": {
+            "200": 6244
+          },
+          "resources": {
+            "cpuMs": 10061.171,
+            "windowMs": 10086,
+            "cpuPercentMean": 99.75382708705136,
+            "cpuPercentMax": 153.6,
+            "heapMbMean": 14.799293154761905,
+            "heapMbMax": 15.4375,
+            "samples": 22
+          },
+          "cpuMsPerRequest": 1.6113342408712363
+        },
+        {
+          "kind": "task",
+          "scenario": {
+            "kind": "task",
+            "auth": "authenticated",
+            "repetitions": 10,
+            "warmup": true,
+            "name": "list directory (5000 entries)",
+            "operation": "listDirectory",
+            "params": {
+              "entries": 5000
+            }
+          },
+          "ok": 10,
+          "failed": 0,
+          "runsMs": [
+            134.38879499980249,
+            115.5685400001239,
+            105.30463999998756,
+            131.7559730000794,
+            112.14313300000504,
+            111.91688499995507,
+            115.55027299979702,
+            134.6338749998249,
+            114.54188599996269,
+            120.96650599990971
+          ],
+          "stats": {
+            "min": 105.30463999998756,
+            "max": 134.6338749998249,
+            "mean": 119.67705059994478,
+            "median": 115.55940649996046
+          },
+          "bytes": 0,
+          "mbPerSec": null,
+          "statusCounts": {
+            "200": 10
+          },
+          "failures": [],
+          "resources": {
+            "cpuMs": 131.201,
+            "windowMs": 122,
+            "cpuPercentMean": 107.54180327868852,
+            "cpuPercentMax": 107.54180327868852,
+            "heapMbMean": 19.734375,
+            "heapMbMax": 19.734375,
+            "samples": 2
+          },
+          "cpuMsPerRun": 131.201
+        },
+        {
+          "kind": "task",
+          "scenario": {
+            "kind": "task",
+            "auth": "authenticated",
+            "repetitions": 10,
+            "warmup": true,
+            "name": "list directory (50000 entries)",
+            "operation": "listDirectory",
+            "params": {
+              "entries": 50000
+            }
+          },
+          "ok": 10,
+          "failed": 0,
+          "runsMs": [
+            1202.4992970000021,
+            1193.9616320000496,
+            1200.9965340001509,
+            1185.8161809998564,
+            1171.628337000031,
+            1181.8157840000931,
+            1162.1238580001518,
+            1154.5807179999538,
+            1158.5228669999633,
+            1211.898359999992
+          ],
+          "stats": {
+            "min": 1154.5807179999538,
+            "max": 1211.898359999992,
+            "mean": 1182.3843568000243,
+            "median": 1183.8159824999748
+          },
+          "bytes": 0,
+          "mbPerSec": null,
+          "statusCounts": {
+            "200": 10
+          },
+          "failures": [],
+          "resources": {
+            "cpuMs": 1172.773,
+            "windowMs": 1217,
+            "cpuPercentMean": 96.36589975349219,
+            "cpuPercentMax": 102.57777777777777,
+            "heapMbMean": 53.37109375,
+            "heapMbMax": 86.98046875,
+            "samples": 6
+          },
+          "cpuMsPerRun": 1172.773
+        },
+        {
+          "kind": "load",
+          "scenario": {
+            "kind": "load",
+            "name": "download file (4 KiB)",
+            "operation": "fileContents",
+            "auth": "authenticated",
+            "load": {
+              "concurrency": 32,
+              "durationMs": 10000,
+              "warmupMs": 1000
+            },
+            "params": {
+              "file": "small"
+            }
+          },
+          "ok": 59586,
+          "ratelimited": 0,
+          "failed": 0,
+          "errored": 0,
+          "elapsedMs": 10006.194402000001,
+          "throughput": 5954.911288560432,
+          "latency": {
+            "min": 0.167625,
+            "max": 62.993368999999994,
+            "mean": 5.368353549155877,
+            "p50": 2.4267429999999997,
+            "p90": 6.551783,
+            "p95": 47.943475,
+            "p99": 55.603441000000004
+          },
+          "statusCounts": {
+            "200": 59586
+          },
+          "resources": {
+            "cpuMs": 10056.457,
+            "windowMs": 10049,
+            "cpuPercentMean": 100.0742063886954,
+            "cpuPercentMax": 102.15546719681907,
+            "heapMbMean": 18.509375,
+            "heapMbMax": 18.875,
+            "samples": 21
+          },
+          "cpuMsPerRequest": 0.16877214446346459
+        },
+        {
+          "kind": "load",
+          "scenario": {
+            "kind": "load",
+            "name": "download file (8 MiB)",
+            "operation": "fileContents",
+            "auth": "authenticated",
+            "load": {
+              "concurrency": 8,
+              "durationMs": 10000,
+              "warmupMs": 1000
+            }
+          },
+          "ok": 360,
+          "ratelimited": 0,
+          "failed": 0,
+          "errored": 0,
+          "elapsedMs": 10172.389043000001,
+          "throughput": 35.38991661430108,
+          "latency": {
+            "min": 75.044629,
+            "max": 481.99015899999995,
+            "mean": 224.57058125277766,
+            "p50": 211.059318,
+            "p90": 305.902429,
+            "p95": 328.074061,
+            "p99": 387.783527
+          },
+          "statusCounts": {
+            "200": 360
+          },
+          "resources": {
+            "cpuMs": 10204.234,
+            "windowMs": 10202,
+            "cpuPercentMean": 100.02189766712411,
+            "cpuPercentMax": 104.17940594059405,
+            "heapMbMean": 24.029575892857142,
+            "heapMbMax": 26.63671875,
+            "samples": 22
+          },
+          "cpuMsPerRequest": 28.345094444444445
+        },
+        {
+          "kind": "load",
+          "scenario": {
+            "kind": "load",
+            "name": "chmod file",
+            "operation": "chmod",
+            "auth": "authenticated",
+            "load": {
+              "concurrency": 32,
+              "durationMs": 10000,
+              "warmupMs": 1000
+            }
+          },
+          "ok": 75481,
+          "ratelimited": 0,
+          "failed": 0,
+          "errored": 0,
+          "elapsedMs": 10003.926799,
+          "throughput": 7545.137176288129,
+          "latency": {
+            "min": 0.16828500000000002,
+            "max": 187.324186,
+            "mean": 4.236729707952928,
+            "p50": 1.591074,
+            "p90": 3.839293,
+            "p95": 14.995793,
+            "p99": 57.735036
+          },
+          "statusCounts": {
+            "204": 75481
+          },
+          "resources": {
+            "cpuMs": 10064.724,
+            "windowMs": 10047,
+            "cpuPercentMean": 100.1764108689161,
+            "cpuPercentMax": 102.6649504950495,
+            "heapMbMean": 31.1462890625,
+            "heapMbMax": 32.5,
+            "samples": 21
+          },
+          "cpuMsPerRequest": 0.13334115870218996
+        },
+        {
+          "kind": "task",
+          "scenario": {
+            "kind": "task",
+            "auth": "authenticated",
+            "repetitions": 5,
+            "warmup": true,
+            "name": "compress 100 MiB tree (tar.gz)",
+            "operation": "compress",
+            "params": {
+              "tree": "100m",
+              "format": "tar.gz"
+            }
+          },
+          "ok": 5,
+          "failed": 0,
+          "runsMs": [
+            279.4425300001167,
+            267.69447800004855,
+            280.1434630001895,
+            280.4093339999672,
+            279.0387440000195
+          ],
+          "stats": {
+            "min": 267.69447800004855,
+            "max": 280.4093339999672,
+            "mean": 277.3457098000683,
+            "median": 279.4425300001167
+          },
+          "bytes": 104660992,
+          "mbPerSec": 357.184355580943,
+          "statusCounts": {
+            "200": 5
+          },
+          "failures": [],
+          "resources": {
+            "cpuMs": 288.06,
+            "windowMs": 282,
+            "cpuPercentMean": 102.14893617021276,
+            "cpuPercentMax": 105.08,
+            "heapMbMean": 32.46484375,
+            "heapMbMax": 32.58984375,
+            "samples": 3
+          },
+          "cpuMsPerRun": 288.06
+        },
+        {
+          "kind": "task",
+          "scenario": {
+            "kind": "task",
+            "auth": "authenticated",
+            "repetitions": 5,
+            "warmup": true,
+            "name": "compress 1 GiB tree (tar.gz)",
+            "operation": "compress",
+            "params": {
+              "tree": "1g",
+              "format": "tar.gz"
+            }
+          },
+          "ok": 5,
+          "failed": 0,
+          "runsMs": [
+            2779.8628579999786,
+            2783.5272830000613,
+            2796.019849000033,
+            2801.9246000000276,
+            2795.896746999817
+          ],
+          "stats": {
+            "min": 2779.8628579999786,
+            "max": 2801.9246000000276,
+            "mean": 2791.4462673999833,
+            "median": 2795.896746999817
+          },
+          "bytes": 1073774592,
+          "mbPerSec": 366.26218443111446,
+          "statusCounts": {
+            "200": 5
+          },
+          "failures": [],
+          "resources": {
+            "cpuMs": 2798.149,
+            "windowMs": 2799,
+            "cpuPercentMean": 99.96959628438728,
+            "cpuPercentMax": 102.55691699604743,
+            "heapMbMean": 47.255208333333336,
+            "heapMbMax": 47.98828125,
+            "samples": 13
+          },
+          "cpuMsPerRun": 2798.149
+        },
+        {
+          "kind": "task",
+          "scenario": {
+            "kind": "task",
+            "auth": "authenticated",
+            "repetitions": 5,
+            "warmup": true,
+            "name": "compress 50k small files tree (tar.gz)",
+            "operation": "compress",
+            "params": {
+              "tree": "many",
+              "format": "tar.gz"
+            }
+          },
+          "ok": 5,
+          "failed": 0,
+          "runsMs": [
+            2639.83116400009,
+            2633.2528309999034,
+            2685.395516999997,
+            2628.0448680000845,
+            2616.0051649999805
+          ],
+          "stats": {
+            "min": 2616.0051649999805,
+            "max": 2685.395516999997,
+            "mean": 2640.5059090000113,
+            "median": 2633.2528309999034
+          },
+          "bytes": 12800000,
+          "mbPerSec": 4.6357232037474825,
+          "statusCounts": {
+            "200": 5
+          },
+          "failures": [],
+          "resources": {
+            "cpuMs": 2638.713,
+            "windowMs": 2636,
+            "cpuPercentMean": 100.10292109256449,
+            "cpuPercentMax": 104.05515873015874,
+            "heapMbMean": 82.20525568181819,
+            "heapMbMax": 85.30859375,
+            "samples": 12
+          },
+          "cpuMsPerRun": 2638.713
+        },
+        {
+          "kind": "task",
+          "scenario": {
+            "kind": "task",
+            "auth": "authenticated",
+            "repetitions": 5,
+            "warmup": true,
+            "name": "decompress 100 MiB archive (tar.gz)",
+            "operation": "decompress",
+            "params": {
+              "tree": "100m",
+              "format": "tar.gz"
+            }
+          },
+          "ok": 5,
+          "failed": 0,
+          "runsMs": [
+            377.28520500008017,
+            386.87774599995464,
+            376.0182320000604,
+            381.16757999989204,
+            385.1316199998837
+          ],
+          "stats": {
+            "min": 376.0182320000604,
+            "max": 386.87774599995464,
+            "mean": 381.2960765999742,
+            "median": 381.16757999989204
+          },
+          "bytes": 104660992,
+          "mbPerSec": 261.8598885037082,
+          "statusCounts": {
+            "204": 5
+          },
+          "failures": [],
+          "resources": {
+            "cpuMs": 385.838,
+            "windowMs": 387,
+            "cpuPercentMean": 99.69974160206719,
+            "cpuPercentMax": 100.97637795275591,
+            "heapMbMean": 22.572265625,
+            "heapMbMax": 22.72265625,
+            "samples": 3
+          },
+          "cpuMsPerRun": 385.838
+        },
+        {
+          "kind": "task",
+          "scenario": {
+            "kind": "task",
+            "auth": "authenticated",
+            "repetitions": 5,
+            "warmup": true,
+            "name": "decompress 1 GiB archive (tar.gz)",
+            "operation": "decompress",
+            "params": {
+              "tree": "1g",
+              "format": "tar.gz"
+            }
+          },
+          "ok": 5,
+          "failed": 0,
+          "runsMs": [
+            4118.999169999966,
+            4054.313944999827,
+            4106.855293999892,
+            4112.301066999789,
+            4118.771372999996
+          ],
+          "stats": {
+            "min": 4054.313944999827,
+            "max": 4118.999169999966,
+            "mean": 4102.248169799894,
+            "median": 4112.301066999789
+          },
+          "bytes": 1073774592,
+          "mbPerSec": 249.01660489247746,
+          "statusCounts": {
+            "204": 5
+          },
+          "failures": [],
+          "resources": {
+            "cpuMs": 4112.708,
+            "windowMs": 4142,
+            "cpuPercentMean": 99.29280540801544,
+            "cpuPercentMax": 104.20395256916997,
+            "heapMbMean": 22.598575367647058,
+            "heapMbMax": 22.78515625,
+            "samples": 18
+          },
+          "cpuMsPerRun": 4112.708
+        },
+        {
+          "kind": "task",
+          "scenario": {
+            "kind": "task",
+            "auth": "authenticated",
+            "repetitions": 5,
+            "warmup": true,
+            "name": "decompress 50k small files archive (tar.gz)",
+            "operation": "decompress",
+            "params": {
+              "tree": "many",
+              "format": "tar.gz"
+            }
+          },
+          "ok": 5,
+          "failed": 0,
+          "runsMs": [
+            6153.769777000183,
+            6167.220221000025,
+            6209.810362999793,
+            6289.636134000029,
+            6217.209407000104
+          ],
+          "stats": {
+            "min": 6153.769777000183,
+            "max": 6289.636134000029,
+            "mean": 6207.529180400027,
+            "median": 6209.810362999793
+          },
+          "bytes": 12800000,
+          "mbPerSec": 1.96576554458631,
+          "statusCounts": {
+            "204": 5
+          },
+          "failures": [],
+          "resources": {
+            "cpuMs": 6219.821,
+            "windowMs": 6280,
+            "cpuPercentMean": 99.04173566878981,
+            "cpuPercentMax": 103.70944881889766,
+            "heapMbMean": 22.50328125,
+            "heapMbMax": 23.1796875,
+            "samples": 26
+          },
+          "cpuMsPerRun": 6219.821
+        },
+        {
+          "kind": "task",
+          "scenario": {
+            "kind": "task",
+            "auth": "authenticated",
+            "repetitions": 5,
+            "warmup": true,
+            "name": "decompress 100 MiB archive (zip)",
+            "operation": "decompress",
+            "params": {
+              "tree": "100m",
+              "format": "zip"
+            }
+          },
+          "ok": 5,
+          "failed": 0,
+          "runsMs": [
+            363.79724800004624,
+            387.43546500010416,
+            370.8404930001125,
+            374.0761170000769,
+            378.9709930000827
+          ],
+          "stats": {
+            "min": 363.79724800004624,
+            "max": 387.43546500010416,
+            "mean": 375.02406320008447,
+            "median": 374.0761170000769
+          },
+          "bytes": 104660992,
+          "mbPerSec": 266.82403784676654,
+          "statusCounts": {
+            "204": 5
+          },
+          "failures": [],
+          "resources": {
+            "cpuMs": 381.556,
+            "windowMs": 380,
+            "cpuPercentMean": 100.40947368421051,
+            "cpuPercentMax": 102.54642857142858,
+            "heapMbMean": 23.8828125,
+            "heapMbMax": 23.8828125,
+            "samples": 3
+          },
+          "cpuMsPerRun": 381.556
+        },
+        {
+          "kind": "task",
+          "scenario": {
+            "kind": "task",
+            "auth": "authenticated",
+            "repetitions": 5,
+            "warmup": true,
+            "name": "decompress 1 GiB archive (zip)",
+            "operation": "decompress",
+            "params": {
+              "tree": "1g",
+              "format": "zip"
+            }
+          },
+          "ok": 5,
+          "failed": 0,
+          "runsMs": [
+            3954.1222909998614,
+            3939.811273999978,
+            3912.159847999923,
+            3947.9573059999384,
+            3952.8132880001795
+          ],
+          "stats": {
+            "min": 3912.159847999923,
+            "max": 3954.1222909998614,
+            "mean": 3941.372801399976,
+            "median": 3947.9573059999384
+          },
+          "bytes": 1073774592,
+          "mbPerSec": 259.3825542246165,
+          "statusCounts": {
+            "204": 5
+          },
+          "failures": [],
+          "resources": {
+            "cpuMs": 3956.101,
+            "windowMs": 3980,
+            "cpuPercentMean": 99.39952261306533,
+            "cpuPercentMax": 103.04365079365081,
+            "heapMbMean": 37.56396484375,
+            "heapMbMax": 38.52734375,
+            "samples": 17
+          },
+          "cpuMsPerRun": 3956.101
+        },
+        {
+          "kind": "task",
+          "scenario": {
+            "kind": "task",
+            "auth": "authenticated",
+            "repetitions": 5,
+            "warmup": true,
+            "name": "delete 100 MiB tree",
+            "operation": "deleteTree",
+            "params": {
+              "tree": "100m"
+            }
+          },
+          "ok": 5,
+          "failed": 0,
+          "runsMs": [
+            242.6366309998557,
+            238.9219490000978,
+            240.43226999999024,
+            235.75017999997362,
+            229.5136520001106
+          ],
+          "stats": {
+            "min": 229.5136520001106,
+            "max": 242.6366309998557,
+            "mean": 237.4509364000056,
+            "median": 238.9219490000978
+          },
+          "bytes": 0,
+          "mbPerSec": null,
+          "statusCounts": {
+            "204": 5
+          },
+          "failures": [],
+          "resources": {
+            "cpuMs": 139.219,
+            "windowMs": 242,
+            "cpuPercentMean": 57.52851239669421,
+            "cpuPercentMax": 57.52851239669421,
+            "heapMbMean": 23.890625,
+            "heapMbMax": 23.890625,
+            "samples": 2
+          },
+          "cpuMsPerRun": 139.219
+        },
+        {
+          "kind": "task",
+          "scenario": {
+            "kind": "task",
+            "auth": "authenticated",
+            "repetitions": 5,
+            "warmup": true,
+            "name": "delete 1 GiB tree",
+            "operation": "deleteTree",
+            "params": {
+              "tree": "1g"
+            }
+          },
+          "ok": 5,
+          "failed": 0,
+          "runsMs": [
+            2421.9316720000934,
+            2430.335212999955,
+            2395.6342440000735,
+            2415.9940300001763,
+            2421.4616449999157
+          ],
+          "stats": {
+            "min": 2395.6342440000735,
+            "max": 2430.335212999955,
+            "mean": 2417.071360800043,
+            "median": 2421.4616449999157
+          },
+          "bytes": 0,
+          "mbPerSec": null,
+          "statusCounts": {
+            "204": 5
+          },
+          "failures": [],
+          "resources": {
+            "cpuMs": 1513.571,
+            "windowMs": 2424,
+            "cpuPercentMean": 62.44104785478547,
+            "cpuPercentMax": 74.37837837837837,
+            "heapMbMean": 23.99453125,
+            "heapMbMax": 24.33203125,
+            "samples": 11
+          },
+          "cpuMsPerRun": 1513.571
+        },
+        {
+          "kind": "task",
+          "scenario": {
+            "kind": "task",
+            "auth": "authenticated",
+            "repetitions": 5,
+            "warmup": true,
+            "name": "delete 50k small files tree",
+            "operation": "deleteTree",
+            "params": {
+              "tree": "many"
+            }
+          },
+          "ok": 5,
+          "failed": 0,
+          "runsMs": [
+            5407.256384999957,
+            5479.366212999914,
+            5548.492535999976,
+            5611.229106999934,
+            5488.658712999895
+          ],
+          "stats": {
+            "min": 5407.256384999957,
+            "max": 5611.229106999934,
+            "mean": 5507.000590799935,
+            "median": 5488.658712999895
+          },
+          "bytes": 0,
+          "mbPerSec": null,
+          "statusCounts": {
+            "204": 5
+          },
+          "failures": [],
+          "resources": {
+            "cpuMs": 3363.134,
+            "windowMs": 5492,
+            "cpuPercentMean": 61.236962855061904,
+            "cpuPercentMax": 64.50276679841897,
+            "heapMbMean": 24.095880681818183,
+            "heapMbMax": 24.21875,
+            "samples": 23
+          },
+          "cpuMsPerRun": 3363.134
+        },
+        {
+          "kind": "task",
+          "scenario": {
+            "kind": "task",
+            "auth": "authenticated",
+            "repetitions": 5,
+            "warmup": true,
+            "name": "upload file (256 MiB)",
+            "operation": "writeFile"
+          },
+          "ok": 5,
+          "failed": 0,
+          "runsMs": [
+            502.1852269999217,
+            503.71483199996874,
+            497.44232000014745,
+            451.24996799998917,
+            511.4562900001183
+          ],
+          "stats": {
+            "min": 451.24996799998917,
+            "max": 511.4562900001183,
+            "mean": 493.20972740002907,
+            "median": 502.1852269999217
+          },
+          "bytes": 268435456,
+          "mbPerSec": 509.77206464108093,
+          "statusCounts": {
+            "204": 5
+          },
+          "failures": [],
+          "resources": {
+            "cpuMs": 420.348,
+            "windowMs": 505,
+            "cpuPercentMean": 83.23722772277227,
+            "cpuPercentMax": 95.2392857142857,
+            "heapMbMean": 24.09375,
+            "heapMbMax": 24.09375,
+            "samples": 3
+          },
+          "cpuMsPerRun": 420.348
+        }
+      ]
+    },
+    {
+      "limit": {
+        "cpus": 2
+      },
+      "startupMs": 873.4854510000441,
+      "idle": {
+        "cpuMs": 0,
+        "windowMs": 3003,
+        "cpuPercentMean": 0,
+        "cpuPercentMax": 0,
+        "heapMbMean": 22.9609375,
+        "heapMbMax": 22.9609375,
+        "samples": 7
+      },
+      "results": [
+        {
+          "kind": "load",
+          "scenario": {
+            "kind": "load",
+            "name": "system info",
+            "operation": "system",
+            "auth": "authenticated",
+            "load": {
+              "concurrency": 32,
+              "durationMs": 10000,
+              "warmupMs": 1000
+            }
+          },
+          "ok": 4723,
+          "ratelimited": 0,
+          "failed": 0,
+          "errored": 0,
+          "elapsedMs": 10033.432931,
+          "throughput": 470.72622426243436,
+          "latency": {
+            "min": 17.967133999999998,
+            "max": 135.733305,
+            "mean": 67.86480033199226,
+            "p50": 69.279337,
+            "p90": 88.103195,
+            "p95": 97.015551,
+            "p99": 111.265134
+          },
+          "statusCounts": {
+            "200": 4723
+          },
+          "resources": {
+            "cpuMs": 5360.337,
+            "windowMs": 10065,
+            "cpuPercentMean": 53.25719821162445,
+            "cpuPercentMax": 56.34439252336448,
+            "heapMbMean": 17.354296875,
+            "heapMbMax": 18.453125,
+            "samples": 21
+          },
+          "cpuMsPerRequest": 1.1349432564048276
+        },
+        {
+          "kind": "load",
+          "scenario": {
+            "kind": "load",
+            "name": "list directory (50 entries)",
+            "operation": "listDirectory",
+            "auth": "authenticated",
+            "load": {
+              "concurrency": 32,
+              "durationMs": 10000,
+              "warmupMs": 1000
+            },
+            "params": {
+              "entries": 50
+            }
+          },
+          "ok": 13160,
+          "ratelimited": 0,
+          "failed": 0,
+          "errored": 0,
+          "elapsedMs": 10027.700127999999,
+          "throughput": 1312.3647328916218,
+          "latency": {
+            "min": 1.179319,
+            "max": 165.59813,
+            "mean": 24.344696228571458,
+            "p50": 20.36613,
+            "p90": 48.096968,
+            "p95": 59.463996,
+            "p99": 86.622844
+          },
+          "statusCounts": {
+            "200": 13160
+          },
+          "resources": {
+            "cpuMs": 19882.499,
+            "windowMs": 10061,
+            "cpuPercentMean": 197.61951098300366,
+            "cpuPercentMax": 199.26309523809522,
+            "heapMbMean": 16.5087890625,
+            "heapMbMax": 17.390625,
+            "samples": 21
+          },
+          "cpuMsPerRequest": 1.5108281914893618
+        },
+        {
+          "kind": "task",
+          "scenario": {
+            "kind": "task",
+            "auth": "authenticated",
+            "repetitions": 10,
+            "warmup": true,
+            "name": "list directory (5000 entries)",
+            "operation": "listDirectory",
+            "params": {
+              "entries": 5000
+            }
+          },
+          "ok": 10,
+          "failed": 0,
+          "runsMs": [
+            103.2489709998481,
+            110.15452499990351,
+            106.81534800003283,
+            110.34923100005835,
+            106.15373999997973,
+            111.09050199994817,
+            111.0559479999356,
+            104.49917099997401,
+            110.09439600002952,
+            108.56912100012414
+          ],
+          "stats": {
+            "min": 103.2489709998481,
+            "max": 111.09050199994817,
+            "mean": 108.2030952999834,
+            "median": 109.33175850007683
+          },
+          "bytes": 0,
+          "mbPerSec": null,
+          "statusCounts": {
+            "200": 10
+          },
+          "failures": [],
+          "resources": {
+            "cpuMs": 127.091,
+            "windowMs": 115,
+            "cpuPercentMean": 110.51391304347827,
+            "cpuPercentMax": 110.51391304347827,
+            "heapMbMean": 19.4140625,
+            "heapMbMax": 19.4140625,
+            "samples": 2
+          },
+          "cpuMsPerRun": 127.091
+        },
+        {
+          "kind": "task",
+          "scenario": {
+            "kind": "task",
+            "auth": "authenticated",
+            "repetitions": 10,
+            "warmup": true,
+            "name": "list directory (50000 entries)",
+            "operation": "listDirectory",
+            "params": {
+              "entries": 50000
+            }
+          },
+          "ok": 10,
+          "failed": 0,
+          "runsMs": [
+            1020.5303360000253,
+            1022.3417199999094,
+            1028.9864680001047,
+            1029.6401770000812,
+            1032.0704540000297,
+            1044.3596779999789,
+            1026.2327389998827,
+            1019.8198520001024,
+            1031.4682950000279,
+            1032.1579930000007
+          ],
+          "stats": {
+            "min": 1019.8198520001024,
+            "max": 1044.3596779999789,
+            "mean": 1028.7607712000142,
+            "median": 1029.313322500093
+          },
+          "bytes": 0,
+          "mbPerSec": null,
+          "statusCounts": {
+            "200": 10
+          },
+          "failures": [],
+          "resources": {
+            "cpuMs": 1156.495,
+            "windowMs": 1081,
+            "cpuPercentMean": 106.98381128584641,
+            "cpuPercentMax": 116.97182539682541,
+            "heapMbMean": 60.475,
+            "heapMbMax": 87.453125,
+            "samples": 6
+          },
+          "cpuMsPerRun": 1156.495
+        },
+        {
+          "kind": "load",
+          "scenario": {
+            "kind": "load",
+            "name": "download file (4 KiB)",
+            "operation": "fileContents",
+            "auth": "authenticated",
+            "load": {
+              "concurrency": 32,
+              "durationMs": 10000,
+              "warmupMs": 1000
+            },
+            "params": {
+              "file": "small"
+            }
+          },
+          "ok": 117346,
+          "ratelimited": 0,
+          "failed": 0,
+          "errored": 0,
+          "elapsedMs": 10006.20449,
+          "throughput": 11727.323793679536,
+          "latency": {
+            "min": 0.174927,
+            "max": 12.782236000000001,
+            "mean": 2.724521888057482,
+            "p50": 2.3213779999999997,
+            "p90": 5.577932,
+            "p95": 6.542489000000001,
+            "p99": 8.208007
+          },
+          "statusCounts": {
+            "200": 117346
+          },
+          "resources": {
+            "cpuMs": 18525.638,
+            "windowMs": 10059,
+            "cpuPercentMean": 184.16977830798288,
+            "cpuPercentMax": 191.79025844930416,
+            "heapMbMean": 20.83515625,
+            "heapMbMax": 21.21484375,
+            "samples": 21
+          },
+          "cpuMsPerRequest": 0.15787191723620744
+        },
+        {
+          "kind": "load",
+          "scenario": {
+            "kind": "load",
+            "name": "download file (8 MiB)",
+            "operation": "fileContents",
+            "auth": "authenticated",
+            "load": {
+              "concurrency": 8,
+              "durationMs": 10000,
+              "warmupMs": 1000
+            }
+          },
+          "ok": 667,
+          "ratelimited": 0,
+          "failed": 0,
+          "errored": 0,
+          "elapsedMs": 10105.872705,
+          "throughput": 66.0012271547804,
+          "latency": {
+            "min": 46.989955,
+            "max": 245.811601,
+            "mean": 120.81920297001506,
+            "p50": 116.404492,
+            "p90": 167.58282,
+            "p95": 179.181802,
+            "p99": 211.739034
+          },
+          "statusCounts": {
+            "200": 667
+          },
+          "resources": {
+            "cpuMs": 18798.093,
+            "windowMs": 10136,
+            "cpuPercentMean": 185.45869179163378,
+            "cpuPercentMax": 191.07125984251968,
+            "heapMbMean": 19.027157738095237,
+            "heapMbMax": 19.5859375,
+            "samples": 22
+          },
+          "cpuMsPerRequest": 28.183047976011995
+        },
+        {
+          "kind": "load",
+          "scenario": {
+            "kind": "load",
+            "name": "chmod file",
+            "operation": "chmod",
+            "auth": "authenticated",
+            "load": {
+              "concurrency": 32,
+              "durationMs": 10000,
+              "warmupMs": 1000
+            }
+          },
+          "ok": 141462,
+          "ratelimited": 0,
+          "failed": 0,
+          "errored": 0,
+          "elapsedMs": 10004.882252,
+          "throughput": 14139.296838972934,
+          "latency": {
+            "min": 0.157922,
+            "max": 64.327736,
+            "mean": 2.259485609350904,
+            "p50": 1.7078060000000002,
+            "p90": 3.6227389999999997,
+            "p95": 5.053411,
+            "p99": 14.996519
+          },
+          "statusCounts": {
+            "204": 141462
+          },
+          "resources": {
+            "cpuMs": 18176.444,
+            "windowMs": 10059,
+            "cpuPercentMean": 180.69831991251615,
+            "cpuPercentMax": 185.54325396825396,
+            "heapMbMean": 20.658984375,
+            "heapMbMax": 21.1328125,
+            "samples": 21
+          },
+          "cpuMsPerRequest": 0.12848994076147657
+        },
+        {
+          "kind": "task",
+          "scenario": {
+            "kind": "task",
+            "auth": "authenticated",
+            "repetitions": 5,
+            "warmup": true,
+            "name": "compress 100 MiB tree (tar.gz)",
+            "operation": "compress",
+            "params": {
+              "tree": "100m",
+              "format": "tar.gz"
+            }
+          },
+          "ok": 5,
+          "failed": 0,
+          "runsMs": [
+            271.25748299993575,
+            268.3592269998044,
+            269.9829390000086,
+            266.52617500000633,
+            270.7168950000778
+          ],
+          "stats": {
+            "min": 266.52617500000633,
+            "max": 271.25748299993575,
+            "mean": 269.3685437999666,
+            "median": 269.9829390000086
+          },
+          "bytes": 104660992,
+          "mbPerSec": 369.69928681307084,
+          "statusCounts": {
+            "200": 5
+          },
+          "failures": [],
+          "resources": {
+            "cpuMs": 293.248,
+            "windowMs": 273,
+            "cpuPercentMean": 107.41684981684982,
+            "cpuPercentMax": 108.33438735177867,
+            "heapMbMean": 24.58203125,
+            "heapMbMax": 24.58203125,
+            "samples": 3
+          },
+          "cpuMsPerRun": 293.248
+        },
+        {
+          "kind": "task",
+          "scenario": {
+            "kind": "task",
+            "auth": "authenticated",
+            "repetitions": 5,
+            "warmup": true,
+            "name": "compress 1 GiB tree (tar.gz)",
+            "operation": "compress",
+            "params": {
+              "tree": "1g",
+              "format": "tar.gz"
+            }
+          },
+          "ok": 5,
+          "failed": 0,
+          "runsMs": [
+            2727.652644000016,
+            2677.5650669999886,
+            2672.417151000118,
+            2673.907347999979,
+            2688.747463000007
+          ],
+          "stats": {
+            "min": 2672.417151000118,
+            "max": 2727.652644000016,
+            "mean": 2688.057934600022,
+            "median": 2677.5650669999886
+          },
+          "bytes": 1073774592,
+          "mbPerSec": 382.44868915449007,
+          "statusCounts": {
+            "200": 5
+          },
+          "failures": [],
+          "resources": {
+            "cpuMs": 2845.016,
+            "windowMs": 2680,
+            "cpuPercentMean": 106.15731343283583,
+            "cpuPercentMax": 108.27193675889329,
+            "heapMbMean": 48.0546875,
+            "heapMbMax": 48.4375,
+            "samples": 12
+          },
+          "cpuMsPerRun": 2845.016
+        },
+        {
+          "kind": "task",
+          "scenario": {
+            "kind": "task",
+            "auth": "authenticated",
+            "repetitions": 5,
+            "warmup": true,
+            "name": "compress 50k small files tree (tar.gz)",
+            "operation": "compress",
+            "params": {
+              "tree": "many",
+              "format": "tar.gz"
+            }
+          },
+          "ok": 5,
+          "failed": 0,
+          "runsMs": [
+            2407.558515999932,
+            2435.514993000077,
+            2407.680033999961,
+            2404.4035460001323,
+            2409.6627960000187
+          ],
+          "stats": {
+            "min": 2404.4035460001323,
+            "max": 2435.514993000077,
+            "mean": 2412.963977000024,
+            "median": 2407.680033999961
+          },
+          "bytes": 12800000,
+          "mbPerSec": 5.070038824768607,
+          "statusCounts": {
+            "200": 5
+          },
+          "failures": [],
+          "resources": {
+            "cpuMs": 2648.208,
+            "windowMs": 2411,
+            "cpuPercentMean": 109.83857320613855,
+            "cpuPercentMax": 112.15793650793651,
+            "heapMbMean": 85.37734375,
+            "heapMbMax": 86.46875,
+            "samples": 11
+          },
+          "cpuMsPerRun": 2648.208
+        },
+        {
+          "kind": "task",
+          "scenario": {
+            "kind": "task",
+            "auth": "authenticated",
+            "repetitions": 5,
+            "warmup": true,
+            "name": "decompress 100 MiB archive (tar.gz)",
+            "operation": "decompress",
+            "params": {
+              "tree": "100m",
+              "format": "tar.gz"
+            }
+          },
+          "ok": 5,
+          "failed": 0,
+          "runsMs": [
+            378.8046169998124,
+            370.1223979999777,
+            371.7909450000152,
+            366.56985099986196,
+            363.7657350001391
+          ],
+          "stats": {
+            "min": 363.7657350001391,
+            "max": 378.8046169998124,
+            "mean": 370.2107091999613,
+            "median": 370.1223979999777
+          },
+          "bytes": 104660992,
+          "mbPerSec": 269.67430379613506,
+          "statusCounts": {
+            "204": 5
+          },
+          "failures": [],
+          "resources": {
+            "cpuMs": 402.021,
+            "windowMs": 375,
+            "cpuPercentMean": 107.20560000000002,
+            "cpuPercentMax": 108.6888888888889,
+            "heapMbMean": 20.9921875,
+            "heapMbMax": 21.2734375,
+            "samples": 3
+          },
+          "cpuMsPerRun": 402.021
+        },
+        {
+          "kind": "task",
+          "scenario": {
+            "kind": "task",
+            "auth": "authenticated",
+            "repetitions": 5,
+            "warmup": true,
+            "name": "decompress 1 GiB archive (tar.gz)",
+            "operation": "decompress",
+            "params": {
+              "tree": "1g",
+              "format": "tar.gz"
+            }
+          },
+          "ok": 5,
+          "failed": 0,
+          "runsMs": [
+            3813.602581999963,
+            3815.912285000086,
+            3778.5556769999675,
+            3778.643185999943,
+            3799.864624999929
+          ],
+          "stats": {
+            "min": 3778.5556769999675,
+            "max": 3815.912285000086,
+            "mean": 3797.3156709999776,
+            "median": 3799.864624999929
+          },
+          "bytes": 1073774592,
+          "mbPerSec": 269.49150852973327,
+          "statusCounts": {
+            "204": 5
+          },
+          "failures": [],
+          "resources": {
+            "cpuMs": 4104.158,
+            "windowMs": 3831,
+            "cpuPercentMean": 107.13020099190813,
+            "cpuPercentMax": 110.43055555555557,
+            "heapMbMean": 20.80810546875,
+            "heapMbMax": 21.40234375,
+            "samples": 17
+          },
+          "cpuMsPerRun": 4104.158
+        },
+        {
+          "kind": "task",
+          "scenario": {
+            "kind": "task",
+            "auth": "authenticated",
+            "repetitions": 5,
+            "warmup": true,
+            "name": "decompress 50k small files archive (tar.gz)",
+            "operation": "decompress",
+            "params": {
+              "tree": "many",
+              "format": "tar.gz"
+            }
+          },
+          "ok": 5,
+          "failed": 0,
+          "runsMs": [
+            5741.147342999931,
+            5861.3256289998535,
+            5762.131893999875,
+            5763.6430340001825,
+            5825.41097499989
+          ],
+          "stats": {
+            "min": 5741.147342999931,
+            "max": 5861.3256289998535,
+            "mean": 5790.7317749999465,
+            "median": 5763.6430340001825
+          },
+          "bytes": 12800000,
+          "mbPerSec": 2.11793672473985,
+          "statusCounts": {
+            "204": 5
+          },
+          "failures": [],
+          "resources": {
+            "cpuMs": 6212.111,
+            "windowMs": 5833,
+            "cpuPercentMean": 106.49941710954911,
+            "cpuPercentMax": 108.61422924901186,
+            "heapMbMean": 20.565755208333332,
+            "heapMbMax": 21.3046875,
+            "samples": 25
+          },
+          "cpuMsPerRun": 6212.111
+        },
+        {
+          "kind": "task",
+          "scenario": {
+            "kind": "task",
+            "auth": "authenticated",
+            "repetitions": 5,
+            "warmup": true,
+            "name": "decompress 100 MiB archive (zip)",
+            "operation": "decompress",
+            "params": {
+              "tree": "100m",
+              "format": "zip"
+            }
+          },
+          "ok": 5,
+          "failed": 0,
+          "runsMs": [
+            358.24996599997394,
+            360.04034800012596,
+            355.93673399998806,
+            362.44961500004865,
+            356.8547110001091
+          ],
+          "stats": {
+            "min": 355.93673399998806,
+            "max": 362.44961500004865,
+            "mean": 358.70627480004913,
+            "median": 358.24996599997394
+          },
+          "bytes": 104660992,
+          "mbPerSec": 278.61133139648996,
+          "statusCounts": {
+            "204": 5
+          },
+          "failures": [],
+          "resources": {
+            "cpuMs": 395.254,
+            "windowMs": 365,
+            "cpuPercentMean": 108.28876712328767,
+            "cpuPercentMax": 110.41732283464567,
+            "heapMbMean": 21.6953125,
+            "heapMbMax": 21.7578125,
+            "samples": 3
+          },
+          "cpuMsPerRun": 395.254
+        },
+        {
+          "kind": "task",
+          "scenario": {
+            "kind": "task",
+            "auth": "authenticated",
+            "repetitions": 5,
+            "warmup": true,
+            "name": "decompress 1 GiB archive (zip)",
+            "operation": "decompress",
+            "params": {
+              "tree": "1g",
+              "format": "zip"
+            }
+          },
+          "ok": 5,
+          "failed": 0,
+          "runsMs": [
+            3637.4850180000067,
+            3658.734749000054,
+            3662.5258450000547,
+            3672.408384999959,
+            3632.3415610000957
+          ],
+          "stats": {
+            "min": 3632.3415610000957,
+            "max": 3672.408384999959,
+            "mean": 3652.699111600034,
+            "median": 3658.734749000054
+          },
+          "bytes": 1073774592,
+          "mbPerSec": 279.8867150125796,
+          "statusCounts": {
+            "204": 5
+          },
+          "failures": [],
+          "resources": {
+            "cpuMs": 3950.929,
+            "windowMs": 3692,
+            "cpuPercentMean": 107.01324485373782,
+            "cpuPercentMax": 110.03293650793651,
+            "heapMbMean": 34.2203125,
+            "heapMbMax": 34.71484375,
+            "samples": 16
+          },
+          "cpuMsPerRun": 3950.929
+        },
+        {
+          "kind": "task",
+          "scenario": {
+            "kind": "task",
+            "auth": "authenticated",
+            "repetitions": 5,
+            "warmup": true,
+            "name": "delete 100 MiB tree",
+            "operation": "deleteTree",
+            "params": {
+              "tree": "100m"
+            }
+          },
+          "ok": 5,
+          "failed": 0,
+          "runsMs": [
+            232.707364999922,
+            230.3903959998861,
+            233.55699099996127,
+            238.5679170000367,
+            221.11138899996877
+          ],
+          "stats": {
+            "min": 221.11138899996877,
+            "max": 238.5679170000367,
+            "mean": 231.26681159995496,
+            "median": 232.707364999922
+          },
+          "bytes": 0,
+          "mbPerSec": null,
+          "statusCounts": {
+            "204": 5
+          },
+          "failures": [],
+          "resources": {
+            "cpuMs": 149.588,
+            "windowMs": 235,
+            "cpuPercentMean": 63.65446808510637,
+            "cpuPercentMax": 63.65446808510637,
+            "heapMbMean": 33.60546875,
+            "heapMbMax": 33.60546875,
+            "samples": 2
+          },
+          "cpuMsPerRun": 149.588
+        },
+        {
+          "kind": "task",
+          "scenario": {
+            "kind": "task",
+            "auth": "authenticated",
+            "repetitions": 5,
+            "warmup": true,
+            "name": "delete 1 GiB tree",
+            "operation": "deleteTree",
+            "params": {
+              "tree": "1g"
+            }
+          },
+          "ok": 5,
+          "failed": 0,
+          "runsMs": [
+            2464.1714559998363,
+            2406.1171590001322,
+            2403.2970710000955,
+            2485.919916999992,
+            2407.025262000039
+          ],
+          "stats": {
+            "min": 2403.2970710000955,
+            "max": 2485.919916999992,
+            "mean": 2433.306173000019,
+            "median": 2407.025262000039
+          },
+          "bytes": 0,
+          "mbPerSec": null,
+          "statusCounts": {
+            "204": 5
+          },
+          "failures": [],
+          "resources": {
+            "cpuMs": 1510.76,
+            "windowMs": 2410,
+            "cpuPercentMean": 62.687136929460586,
+            "cpuPercentMax": 76.60676691729323,
+            "heapMbMean": 20.481640625,
+            "heapMbMax": 21.30078125,
+            "samples": 11
+          },
+          "cpuMsPerRun": 1510.76
+        },
+        {
+          "kind": "task",
+          "scenario": {
+            "kind": "task",
+            "auth": "authenticated",
+            "repetitions": 5,
+            "warmup": true,
+            "name": "delete 50k small files tree",
+            "operation": "deleteTree",
+            "params": {
+              "tree": "many"
+            }
+          },
+          "ok": 5,
+          "failed": 0,
+          "runsMs": [
+            5481.684016000014,
+            5625.721049999818,
+            5712.132982000243,
+            5508.542098999955,
+            5442.274457000196
+          ],
+          "stats": {
+            "min": 5442.274457000196,
+            "max": 5712.132982000243,
+            "mean": 5554.070920800045,
+            "median": 5508.542098999955
+          },
+          "bytes": 0,
+          "mbPerSec": null,
+          "statusCounts": {
+            "204": 5
+          },
+          "failures": [],
+          "resources": {
+            "cpuMs": 3369.917,
+            "windowMs": 5511,
+            "cpuPercentMean": 61.148920341135906,
+            "cpuPercentMax": 63.06442687747036,
+            "heapMbMean": 20.523259943181817,
+            "heapMbMax": 21.57421875,
+            "samples": 23
+          },
+          "cpuMsPerRun": 3369.917
+        },
+        {
+          "kind": "task",
+          "scenario": {
+            "kind": "task",
+            "auth": "authenticated",
+            "repetitions": 5,
+            "warmup": true,
+            "name": "upload file (256 MiB)",
+            "operation": "writeFile"
+          },
+          "ok": 5,
+          "failed": 0,
+          "runsMs": [
+            434.7692180001177,
+            437.94505999982357,
+            451.4269810002297,
+            426.07967199990526,
+            435.88780799973756
+          ],
+          "stats": {
+            "min": 426.07967199990526,
+            "max": 451.4269810002297,
+            "mean": 437.22174779996277,
+            "median": 435.88780799973756
+          },
+          "bytes": 268435456,
+          "mbPerSec": 587.3070898100323,
+          "statusCounts": {
+            "204": 5
+          },
+          "failures": [],
+          "resources": {
+            "cpuMs": 411.143,
+            "windowMs": 439,
+            "cpuPercentMean": 93.65444191343964,
+            "cpuPercentMax": 121.60162162162163,
+            "heapMbMean": 21.171875,
+            "heapMbMax": 21.171875,
+            "samples": 3
+          },
+          "cpuMsPerRun": 411.143
+        }
+      ]
+    },
+    {
+      "limit": {
+        "cpus": 4
+      },
+      "startupMs": 885.7838010000996,
+      "idle": {
+        "cpuMs": 0,
+        "windowMs": 3003,
+        "cpuPercentMean": 0,
+        "cpuPercentMax": 0,
+        "heapMbMean": 25.0546875,
+        "heapMbMax": 25.0546875,
+        "samples": 7
+      },
+      "results": [
+        {
+          "kind": "load",
+          "scenario": {
+            "kind": "load",
+            "name": "system info",
+            "operation": "system",
+            "auth": "authenticated",
+            "load": {
+              "concurrency": 32,
+              "durationMs": 10000,
+              "warmupMs": 1000
+            }
+          },
+          "ok": 4583,
+          "ratelimited": 0,
+          "failed": 0,
+          "errored": 0,
+          "elapsedMs": 10040.626189999999,
+          "throughput": 456.44563528960543,
+          "latency": {
+            "min": 20.719227,
+            "max": 137.682549,
+            "mean": 70.03370646716135,
+            "p50": 72.973628,
+            "p90": 92.050314,
+            "p95": 96.993943,
+            "p99": 112.566035
+          },
+          "statusCounts": {
+            "200": 4583
+          },
+          "resources": {
+            "cpuMs": 5767.805,
+            "windowMs": 10073,
+            "cpuPercentMean": 57.260051623151,
+            "cpuPercentMax": 60.68529411764706,
+            "heapMbMean": 19.249609375,
+            "heapMbMax": 20.3515625,
+            "samples": 21
+          },
+          "cpuMsPerRequest": 1.258521710669867
+        },
+        {
+          "kind": "load",
+          "scenario": {
+            "kind": "load",
+            "name": "list directory (50 entries)",
+            "operation": "listDirectory",
+            "auth": "authenticated",
+            "load": {
+              "concurrency": 32,
+              "durationMs": 10000,
+              "warmupMs": 1000
+            },
+            "params": {
+              "entries": 50
+            }
+          },
+          "ok": 16701,
+          "ratelimited": 0,
+          "failed": 0,
+          "errored": 0,
+          "elapsedMs": 10018.706557,
+          "throughput": 1666.9816512722523,
+          "latency": {
+            "min": 1.187003,
+            "max": 174.48942,
+            "mean": 19.17277670253275,
+            "p50": 14.797279,
+            "p90": 40.312556,
+            "p95": 52.125757,
+            "p99": 80.419731
+          },
+          "statusCounts": {
+            "200": 16701
+          },
+          "resources": {
+            "cpuMs": 32556.806,
+            "windowMs": 10052,
+            "cpuPercentMean": 323.88386390768005,
+            "cpuPercentMax": 330.63888888888886,
+            "heapMbMean": 20.52109375,
+            "heapMbMax": 22.47265625,
+            "samples": 21
+          },
+          "cpuMsPerRequest": 1.949392611220885
+        },
+        {
+          "kind": "task",
+          "scenario": {
+            "kind": "task",
+            "auth": "authenticated",
+            "repetitions": 10,
+            "warmup": true,
+            "name": "list directory (5000 entries)",
+            "operation": "listDirectory",
+            "params": {
+              "entries": 5000
+            }
+          },
+          "ok": 10,
+          "failed": 0,
+          "runsMs": [
+            110.7784110000357,
+            113.94161999970675,
+            108.28843600023538,
+            121.50458199996501,
+            111.82916900003329,
+            110.64985099993646,
+            106.25809699995443,
+            104.52137400023639,
+            107.33339100005105,
+            103.6529669999145
+          ],
+          "stats": {
+            "min": 103.6529669999145,
+            "max": 121.50458199996501,
+            "mean": 109.8757898000069,
+            "median": 109.46914350008592
+          },
+          "bytes": 0,
+          "mbPerSec": null,
+          "statusCounts": {
+            "200": 10
+          },
+          "failures": [],
+          "resources": {
+            "cpuMs": 135.907,
+            "windowMs": 114,
+            "cpuPercentMean": 119.21666666666668,
+            "cpuPercentMax": 119.21666666666668,
+            "heapMbMean": 21.32421875,
+            "heapMbMax": 21.32421875,
+            "samples": 2
+          },
+          "cpuMsPerRun": 135.907
+        },
+        {
+          "kind": "task",
+          "scenario": {
+            "kind": "task",
+            "auth": "authenticated",
+            "repetitions": 10,
+            "warmup": true,
+            "name": "list directory (50000 entries)",
+            "operation": "listDirectory",
+            "params": {
+              "entries": 50000
+            }
+          },
+          "ok": 10,
+          "failed": 0,
+          "runsMs": [
+            1039.4877829998732,
+            1030.722055000253,
+            1024.863393000327,
+            1027.1280350000598,
+            1034.200298000127,
+            1054.829899000004,
+            1038.542400999926,
+            1036.1030150000006,
+            1026.1027949997224,
+            1018.3180419998243
+          ],
+          "stats": {
+            "min": 1018.3180419998243,
+            "max": 1054.829899000004,
+            "mean": 1033.0297716000118,
+            "median": 1032.46117650019
+          },
+          "bytes": 0,
+          "mbPerSec": null,
+          "statusCounts": {
+            "200": 10
+          },
+          "failures": [],
+          "resources": {
+            "cpuMs": 1221.377,
+            "windowMs": 1069,
+            "cpuPercentMean": 114.25416276894293,
+            "cpuPercentMax": 123.12727272727273,
+            "heapMbMean": 63.01484375,
+            "heapMbMax": 89.078125,
+            "samples": 6
+          },
+          "cpuMsPerRun": 1221.377
+        },
+        {
+          "kind": "load",
+          "scenario": {
+            "kind": "load",
+            "name": "download file (4 KiB)",
+            "operation": "fileContents",
+            "auth": "authenticated",
+            "load": {
+              "concurrency": 32,
+              "durationMs": 10000,
+              "warmupMs": 1000
+            },
+            "params": {
+              "file": "small"
+            }
+          },
+          "ok": 128213,
+          "ratelimited": 0,
+          "failed": 0,
+          "errored": 0,
+          "elapsedMs": 10005.666511,
+          "throughput": 12814.038910755778,
+          "latency": {
+            "min": 0.167934,
+            "max": 16.28279,
+            "mean": 2.4934714091472836,
+            "p50": 2.083069,
+            "p90": 4.81453,
+            "p95": 5.989701,
+            "p99": 8.601764
+          },
+          "statusCounts": {
+            "200": 128213
+          },
+          "resources": {
+            "cpuMs": 23254.684,
+            "windowMs": 10061,
+            "cpuPercentMean": 231.13690488023062,
+            "cpuPercentMax": 235.6295634920635,
+            "heapMbMean": 20.66484375,
+            "heapMbMax": 21.69921875,
+            "samples": 21
+          },
+          "cpuMsPerRequest": 0.18137539875051673
+        },
+        {
+          "kind": "load",
+          "scenario": {
+            "kind": "load",
+            "name": "download file (8 MiB)",
+            "operation": "fileContents",
+            "auth": "authenticated",
+            "load": {
+              "concurrency": 8,
+              "durationMs": 10000,
+              "warmupMs": 1000
+            }
+          },
+          "ok": 835,
+          "ratelimited": 0,
+          "failed": 0,
+          "errored": 0,
+          "elapsedMs": 10055.254544,
+          "throughput": 83.04115985788216,
+          "latency": {
+            "min": 37.277864,
+            "max": 237.110503,
+            "mean": 96.06397260718578,
+            "p50": 94.438593,
+            "p90": 128.80778600000002,
+            "p95": 139.773953,
+            "p99": 159.857109
+          },
+          "statusCounts": {
+            "200": 835
+          },
+          "resources": {
+            "cpuMs": 22905.019,
+            "windowMs": 10084,
+            "cpuPercentMean": 227.14219555731853,
+            "cpuPercentMax": 249.70925196850393,
+            "heapMbMean": 18.751953125,
+            "heapMbMax": 19.4921875,
+            "samples": 21
+          },
+          "cpuMsPerRequest": 27.431160479041917
+        },
+        {
+          "kind": "load",
+          "scenario": {
+            "kind": "load",
+            "name": "chmod file",
+            "operation": "chmod",
+            "auth": "authenticated",
+            "load": {
+              "concurrency": 32,
+              "durationMs": 10000,
+              "warmupMs": 1000
+            }
+          },
+          "ok": 160131,
+          "ratelimited": 0,
+          "failed": 0,
+          "errored": 0,
+          "elapsedMs": 10006.694883,
+          "throughput": 16002.386589406316,
+          "latency": {
+            "min": 0.153425,
+            "max": 16.129201,
+            "mean": 1.9964173534543117,
+            "p50": 1.669253,
+            "p90": 3.748185,
+            "p95": 4.686132,
+            "p99": 6.928228
+          },
+          "statusCounts": {
+            "204": 160131
+          },
+          "resources": {
+            "cpuMs": 22959.406,
+            "windowMs": 10059,
+            "cpuPercentMean": 228.24740033800578,
+            "cpuPercentMax": 231.99623015873016,
+            "heapMbMean": 20.358203125,
+            "heapMbMax": 21.359375,
+            "samples": 21
+          },
+          "cpuMsPerRequest": 0.14337889602887635
+        },
+        {
+          "kind": "task",
+          "scenario": {
+            "kind": "task",
+            "auth": "authenticated",
+            "repetitions": 5,
+            "warmup": true,
+            "name": "compress 100 MiB tree (tar.gz)",
+            "operation": "compress",
+            "params": {
+              "tree": "100m",
+              "format": "tar.gz"
+            }
+          },
+          "ok": 5,
+          "failed": 0,
+          "runsMs": [
+            268.45435399981216,
+            265.9905719999224,
+            264.1865930003114,
+            264.23801700025797,
+            267.86047400021926
+          ],
+          "stats": {
+            "min": 264.1865930003114,
+            "max": 268.45435399981216,
+            "mean": 266.14600200010466,
+            "median": 265.9905719999224
+          },
+          "bytes": 104660992,
+          "mbPerSec": 375.2482625588291,
+          "statusCounts": {
+            "200": 5
+          },
+          "failures": [],
+          "resources": {
+            "cpuMs": 293.287,
+            "windowMs": 269,
+            "cpuPercentMean": 109.02862453531598,
+            "cpuPercentMax": 109.33333333333333,
+            "heapMbMean": 23.921875,
+            "heapMbMax": 23.921875,
+            "samples": 3
+          },
+          "cpuMsPerRun": 293.287
+        },
+        {
+          "kind": "task",
+          "scenario": {
+            "kind": "task",
+            "auth": "authenticated",
+            "repetitions": 5,
+            "warmup": true,
+            "name": "compress 1 GiB tree (tar.gz)",
+            "operation": "compress",
+            "params": {
+              "tree": "1g",
+              "format": "tar.gz"
+            }
+          },
+          "ok": 5,
+          "failed": 0,
+          "runsMs": [
+            2703.6881699999794,
+            2690.2280339999124,
+            2661.820044999942,
+            2697.1890510004014,
+            2673.2556759999134
+          ],
+          "stats": {
+            "min": 2661.820044999942,
+            "max": 2703.6881699999794,
+            "mean": 2685.2361952000297,
+            "median": 2690.2280339999124
+          },
+          "bytes": 1073774592,
+          "mbPerSec": 380.6484941268861,
+          "statusCounts": {
+            "200": 5
+          },
+          "failures": [],
+          "resources": {
+            "cpuMs": 2913.463,
+            "windowMs": 2693,
+            "cpuPercentMean": 108.18652060898626,
+            "cpuPercentMax": 110.57351778656125,
+            "heapMbMean": 45.22123579545455,
+            "heapMbMax": 46.39453125,
+            "samples": 12
+          },
+          "cpuMsPerRun": 2913.463
+        },
+        {
+          "kind": "task",
+          "scenario": {
+            "kind": "task",
+            "auth": "authenticated",
+            "repetitions": 5,
+            "warmup": true,
+            "name": "compress 50k small files tree (tar.gz)",
+            "operation": "compress",
+            "params": {
+              "tree": "many",
+              "format": "tar.gz"
+            }
+          },
+          "ok": 5,
+          "failed": 0,
+          "runsMs": [
+            2403.42949999962,
+            2393.0359100000933,
+            2412.625386000145,
+            2408.9816439999267,
+            2390.8603610000573
+          ],
+          "stats": {
+            "min": 2390.8603610000573,
+            "max": 2412.625386000145,
+            "mean": 2401.7865601999683,
+            "median": 2403.42949999962
+          },
+          "bytes": 12800000,
+          "mbPerSec": 5.079005333837307,
+          "statusCounts": {
+            "200": 5
+          },
+          "failures": [],
+          "resources": {
+            "cpuMs": 2697.277,
+            "windowMs": 2406,
+            "cpuPercentMean": 112.10627597672487,
+            "cpuPercentMax": 114.03543307086615,
+            "heapMbMean": 81.4,
+            "heapMbMax": 83.8359375,
+            "samples": 11
+          },
+          "cpuMsPerRun": 2697.277
+        },
+        {
+          "kind": "task",
+          "scenario": {
+            "kind": "task",
+            "auth": "authenticated",
+            "repetitions": 5,
+            "warmup": true,
+            "name": "decompress 100 MiB archive (tar.gz)",
+            "operation": "decompress",
+            "params": {
+              "tree": "100m",
+              "format": "tar.gz"
+            }
+          },
+          "ok": 5,
+          "failed": 0,
+          "runsMs": [
+            371.75033999979496,
+            359.9676310000941,
+            363.9206570000388,
+            358.8939650002867,
+            362.32762100035325
+          ],
+          "stats": {
+            "min": 358.8939650002867,
+            "max": 371.75033999979496,
+            "mean": 363.37204280011355,
+            "median": 362.32762100035325
+          },
+          "bytes": 104660992,
+          "mbPerSec": 275.4758241296285,
+          "statusCounts": {
+            "204": 5
+          },
+          "failures": [],
+          "resources": {
+            "cpuMs": 401.285,
+            "windowMs": 368,
+            "cpuPercentMean": 109.04483695652173,
+            "cpuPercentMax": 110.02648221343874,
+            "heapMbMean": 20.255859375,
+            "heapMbMax": 20.26171875,
+            "samples": 3
+          },
+          "cpuMsPerRun": 401.285
+        },
+        {
+          "kind": "task",
+          "scenario": {
+            "kind": "task",
+            "auth": "authenticated",
+            "repetitions": 5,
+            "warmup": true,
+            "name": "decompress 1 GiB archive (tar.gz)",
+            "operation": "decompress",
+            "params": {
+              "tree": "1g",
+              "format": "tar.gz"
+            }
+          },
+          "ok": 5,
+          "failed": 0,
+          "runsMs": [
+            3759.2785379998386,
+            3763.40277899988,
+            3760.842749999836,
+            3768.5555829997174,
+            3753.376824999694
+          ],
+          "stats": {
+            "min": 3753.376824999694,
+            "max": 3768.5555829997174,
+            "mean": 3761.0912949997933,
+            "median": 3760.842749999836
+          },
+          "bytes": 1073774592,
+          "mbPerSec": 272.287707323058,
+          "statusCounts": {
+            "204": 5
+          },
+          "failures": [],
+          "resources": {
+            "cpuMs": 4152.114,
+            "windowMs": 3788,
+            "cpuPercentMean": 109.61230200633578,
+            "cpuPercentMax": 113.19565217391303,
+            "heapMbMean": 20.26796875,
+            "heapMbMax": 20.53515625,
+            "samples": 16
+          },
+          "cpuMsPerRun": 4152.114
+        },
+        {
+          "kind": "task",
+          "scenario": {
+            "kind": "task",
+            "auth": "authenticated",
+            "repetitions": 5,
+            "warmup": true,
+            "name": "decompress 50k small files archive (tar.gz)",
+            "operation": "decompress",
+            "params": {
+              "tree": "many",
+              "format": "tar.gz"
+            }
+          },
+          "ok": 5,
+          "failed": 0,
+          "runsMs": [
+            5765.757745000068,
+            5757.487204999663,
+            5763.321453999728,
+            5752.444730000105,
+            5747.9122150000185
+          ],
+          "stats": {
+            "min": 5747.9122150000185,
+            "max": 5765.757745000068,
+            "mean": 5757.384669799916,
+            "median": 5757.487204999663
+          },
+          "bytes": 12800000,
+          "mbPerSec": 2.1202011946113766,
+          "statusCounts": {
+            "204": 5
+          },
+          "failures": [],
+          "resources": {
+            "cpuMs": 6365.75,
+            "windowMs": 5824,
+            "cpuPercentMean": 109.3020260989011,
+            "cpuPercentMax": 111.79644268774705,
+            "heapMbMean": 20.212890625,
+            "heapMbMax": 20.60546875,
+            "samples": 25
+          },
+          "cpuMsPerRun": 6365.75
+        },
+        {
+          "kind": "task",
+          "scenario": {
+            "kind": "task",
+            "auth": "authenticated",
+            "repetitions": 5,
+            "warmup": true,
+            "name": "decompress 100 MiB archive (zip)",
+            "operation": "decompress",
+            "params": {
+              "tree": "100m",
+              "format": "zip"
+            }
+          },
+          "ok": 5,
+          "failed": 0,
+          "runsMs": [
+            346.88680100021884,
+            347.9202239997685,
+            345.86740200035274,
+            346.1081629996188,
+            346.07526500010863
+          ],
+          "stats": {
+            "min": 345.86740200035274,
+            "max": 347.9202239997685,
+            "mean": 346.5715710000135,
+            "median": 346.1081629996188
+          },
+          "bytes": 104660992,
+          "mbPerSec": 288.3852814535031,
+          "statusCounts": {
+            "204": 5
+          },
+          "failures": [],
+          "resources": {
+            "cpuMs": 388.477,
+            "windowMs": 352,
+            "cpuPercentMean": 110.36278409090909,
+            "cpuPercentMax": 111.84920634920637,
+            "heapMbMean": 21.955078125,
+            "heapMbMax": 22.15625,
+            "samples": 3
+          },
+          "cpuMsPerRun": 388.477
+        },
+        {
+          "kind": "task",
+          "scenario": {
+            "kind": "task",
+            "auth": "authenticated",
+            "repetitions": 5,
+            "warmup": true,
+            "name": "decompress 1 GiB archive (zip)",
+            "operation": "decompress",
+            "params": {
+              "tree": "1g",
+              "format": "zip"
+            }
+          },
+          "ok": 5,
+          "failed": 0,
+          "runsMs": [
+            3608.748660000041,
+            3604.9326110002585,
+            3592.7794959996827,
+            3626.503045000136,
+            3602.8311109999195
+          ],
+          "stats": {
+            "min": 3592.7794959996827,
+            "max": 3626.503045000136,
+            "mean": 3607.1589846000074,
+            "median": 3604.9326110002585
+          },
+          "bytes": 1073774592,
+          "mbPerSec": 284.0639092323733,
+          "statusCounts": {
+            "204": 5
+          },
+          "failures": [],
+          "resources": {
+            "cpuMs": 3941.992,
+            "windowMs": 3638,
+            "cpuPercentMean": 108.35601979109401,
+            "cpuPercentMax": 111.61626984126984,
+            "heapMbMean": 33.44739583333333,
+            "heapMbMax": 33.82421875,
+            "samples": 16
+          },
+          "cpuMsPerRun": 3941.992
+        },
+        {
+          "kind": "task",
+          "scenario": {
+            "kind": "task",
+            "auth": "authenticated",
+            "repetitions": 5,
+            "warmup": true,
+            "name": "delete 100 MiB tree",
+            "operation": "deleteTree",
+            "params": {
+              "tree": "100m"
+            }
+          },
+          "ok": 5,
+          "failed": 0,
+          "runsMs": [
+            225.25037400005385,
+            222.27249700017273,
+            226.73353100009263,
+            238.4966939999722,
+            233.68350300006568
+          ],
+          "stats": {
+            "min": 222.27249700017273,
+            "max": 238.4966939999722,
+            "mean": 229.28731980007143,
+            "median": 226.73353100009263
+          },
+          "bytes": 0,
+          "mbPerSec": null,
+          "statusCounts": {
+            "204": 5
+          },
+          "failures": [],
+          "resources": {
+            "cpuMs": 142.932,
+            "windowMs": 229,
+            "cpuPercentMean": 62.41572052401746,
+            "cpuPercentMax": 62.41572052401746,
+            "heapMbMean": 20.9921875,
+            "heapMbMax": 20.9921875,
+            "samples": 2
+          },
+          "cpuMsPerRun": 142.932
+        },
+        {
+          "kind": "task",
+          "scenario": {
+            "kind": "task",
+            "auth": "authenticated",
+            "repetitions": 5,
+            "warmup": true,
+            "name": "delete 1 GiB tree",
+            "operation": "deleteTree",
+            "params": {
+              "tree": "1g"
+            }
+          },
+          "ok": 5,
+          "failed": 0,
+          "runsMs": [
+            2419.0361810000613,
+            2494.419069000054,
+            2461.9635270000435,
+            2481.020062000025,
+            2582.4255160000175
+          ],
+          "stats": {
+            "min": 2419.0361810000613,
+            "max": 2582.4255160000175,
+            "mean": 2487.77287100004,
+            "median": 2481.020062000025
+          },
+          "bytes": 0,
+          "mbPerSec": null,
+          "statusCounts": {
+            "204": 5
+          },
+          "failures": [],
+          "resources": {
+            "cpuMs": 1521.851,
+            "windowMs": 2483,
+            "cpuPercentMean": 61.290817559403955,
+            "cpuPercentMax": 73.81133004926109,
+            "heapMbMean": 20.756640625,
+            "heapMbMax": 20.87109375,
+            "samples": 11
+          },
+          "cpuMsPerRun": 1521.851
+        },
+        {
+          "kind": "task",
+          "scenario": {
+            "kind": "task",
+            "auth": "authenticated",
+            "repetitions": 5,
+            "warmup": true,
+            "name": "delete 50k small files tree",
+            "operation": "deleteTree",
+            "params": {
+              "tree": "many"
+            }
+          },
+          "ok": 5,
+          "failed": 0,
+          "runsMs": [
+            5444.581912000198,
+            5306.0803580000065,
+            5322.233839999884,
+            5425.083070000168,
+            5343.138780999929
+          ],
+          "stats": {
+            "min": 5306.0803580000065,
+            "max": 5444.581912000198,
+            "mean": 5368.223592200037,
+            "median": 5343.138780999929
+          },
+          "bytes": 0,
+          "mbPerSec": null,
+          "statusCounts": {
+            "204": 5
+          },
+          "failures": [],
+          "resources": {
+            "cpuMs": 3316.905,
+            "windowMs": 5346,
+            "cpuPercentMean": 62.044612794612796,
+            "cpuPercentMax": 64.37035573122529,
+            "heapMbMean": 20.869318181818183,
+            "heapMbMax": 21.3125,
+            "samples": 23
+          },
+          "cpuMsPerRun": 3316.905
+        },
+        {
+          "kind": "task",
+          "scenario": {
+            "kind": "task",
+            "auth": "authenticated",
+            "repetitions": 5,
+            "warmup": true,
+            "name": "upload file (256 MiB)",
+            "operation": "writeFile"
+          },
+          "ok": 5,
+          "failed": 0,
+          "runsMs": [
+            434.60115200001746,
+            408.61703799990937,
+            427.2970210001804,
+            435.8060379996896,
+            429.7054510000162
+          ],
+          "stats": {
+            "min": 408.61703799990937,
+            "max": 435.8060379996896,
+            "mean": 427.2053399999626,
+            "median": 429.7054510000162
+          },
+          "bytes": 268435456,
+          "mbPerSec": 595.7569293203832,
+          "statusCounts": {
+            "204": 5
+          },
+          "failures": [],
+          "resources": {
+            "cpuMs": 405.538,
+            "windowMs": 432,
+            "cpuPercentMean": 93.87453703703704,
+            "cpuPercentMax": 121.10277777777779,
+            "heapMbMean": 20.8359375,
+            "heapMbMax": 20.8359375,
+            "samples": 3
+          },
+          "cpuMsPerRun": 405.538
+        }
+      ]
+    }
+  ]
+}
