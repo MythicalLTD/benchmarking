@@ -1,0 +1,20 @@
+{
+  "target": "daemons",
+  "cpuModel": "AMD EPYC 9V74 80-Core Processor",
+  "cores": 4,
+  "memoryBytes": 16760344576,
+  "diskFreeBytes": 121280356352,
+  "kernel": "7.0.0-1017-azure",
+  "arch": "x86_64",
+  "os": "ubuntu24",
+  "imageVersion": "20261026.354.1",
+  "runnerName": "GitHub Actions 1000022476",
+  "dockerVersion": "28.0.4",
+  "ohaVersion": "oha 1.16.0",
+  "images": [
+    "busybox:1.37@sha256:a7dbc319b1438115a207e11930dc4bb3e643dcb3ec0bdd694bb36cd8fad289ec",
+    "ghcr.io/mythicalltd/featherwings:latest@sha256:db8f61798906d4c060b97205aacdef80191e926071d41d3d41c53c6d539fdddd",
+    "ghcr.io/pelican/wings:latest@sha256:cf62cae99329dde1a0507d144fc5fb0c5e9d6c8346e6987d67dc08bc323e5644",
+    "ghcr.io/pterodactyl/wings:latest@sha256:f3eb1fcca035ba94256d612e31315bf33db948693db1a9c4646ce398aefc2f1b"
+  ]
+}
