@@ -1,0 +1,22 @@
+{
+  "target": "panels",
+  "cpuModel": "AMD EPYC 9V74 80-Core Processor",
+  "cores": 4,
+  "memoryBytes": 16759443456,
+  "diskFreeBytes": 120461377536,
+  "kernel": "7.0.0-1019-azure",
+  "arch": "x86_64",
+  "os": "ubuntu26",
+  "imageVersion": "20261111.196.1",
+  "runnerName": "GitHub Actions 1000024827",
+  "dockerVersion": "29.4.2",
+  "ohaVersion": "oha 1.17.0",
+  "images": [
+    "ghcr.io/blueprintframework/hydrodactyl:latest@sha256:6a0f10587258bf7d8df96fad1f4042959527b3176f63c60ad7d607d9742011ae",
+    "ghcr.io/mythicalltd/featherpanel-backend:latest@sha256:d27762702f161905895fa39860a99df82d05a52a6e73614ad8a52124da18147b",
+    "ghcr.io/pelican/panel:latest@sha256:68618885bb9cf49154c627863ba0bfc7308888ec87536aee7c8cbc2e4b0d929d",
+    "ghcr.io/pterodactyl/panel:latest@sha256:cd7cda1727f110cee375ed52a95adfe73065548576715e7b92f8c899558271e3",
+    "mariadb:11@sha256:d36f18d65a0459510b8b0f643b226a6d299e3206486e2b64ff20754a6d291707",
+    "redis:7-alpine@sha256:7f7d30b7fdd09467bac58198a1f166dd69789d348d4fe859cccb20e0cf287fbe"
+  ]
+}
