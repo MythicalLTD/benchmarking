@@ -1,20 +1,20 @@
 {
   "target": "daemons",
-  "cpuModel": "AMD EPYC 9V74 80-Core Processor",
+  "cpuModel": "INTEL(R) XEON(R) PLATINUM 8573C",
   "cores": 4,
-  "memoryBytes": 16759439360,
-  "diskFreeBytes": 124564148224,
-  "kernel": "7.0.0-1019-azure",
+  "memoryBytes": 16758390784,
+  "diskFreeBytes": 124516741120,
+  "kernel": "7.0.0-1020-azure",
   "arch": "x86_64",
   "os": "ubuntu26",
-  "imageVersion": "20261111.196.1",
-  "runnerName": "GitHub Actions 1000024826",
+  "imageVersion": "20261116.202.1",
+  "runnerName": "GitHub Actions 1000026210",
   "dockerVersion": "29.4.2",
   "ohaVersion": "oha 1.17.0",
   "images": [
     "busybox:1.37@sha256:a7dbc319b1438115a207e11930dc4bb3e643dcb3ec0bdd694bb36cd8fad289ec",
-    "ghcr.io/mythicalltd/featherwings:latest@sha256:b938c1f144b5b7c146e6b9113343250bbc8a19087d82292f3e7780bb0da624e6",
-    "ghcr.io/pelican/wings:latest@sha256:45a970378805c1fb9ba25c8f933c25f2339e5a7a87d9925721b89459abe66c7b",
+    "ghcr.io/mythicalltd/featherwings:latest@sha256:c91d09644a42095ae593fef981f9f16faf6ac20d80d403c10a9b541a2f25333d",
+    "ghcr.io/pelican/wings:latest@sha256:046c61f8df5c1363decc89f7777cb78f9b7b5230770b19d4588ab143a85589b4",
     "ghcr.io/pterodactyl/wings:latest@sha256:6d0a513d1999e2d7930dde3fffb78fb80f38e0413452d28f64320c54f11be056"
   ]
 }

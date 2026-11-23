@@ -1,0 +1,22 @@
+{
+  "target": "panels",
+  "cpuModel": "Intel(R) Xeon(R) 6975P-C",
+  "cores": 4,
+  "memoryBytes": 16463409152,
+  "diskFreeBytes": 124203974656,
+  "kernel": "7.0.0-1016-aws",
+  "arch": "x86_64",
+  "os": "ubuntu26",
+  "imageVersion": "20261116.88.1",
+  "runnerName": "GitHub Actions 1000026209",
+  "dockerVersion": "29.4.2",
+  "ohaVersion": "oha 1.17.0",
+  "images": [
+    "ghcr.io/blueprintframework/hydrodactyl:latest@sha256:2c7b86ccaec734d331d6e5ff02c6cbb254253aab2eaddc0252357ca3af58a3fb",
+    "ghcr.io/mythicalltd/featherpanel-backend:latest@sha256:365edae9be07276d863dbd9c60335d8acb7258dab68eb98d920eaaf4ea4ef4de",
+    "ghcr.io/pelican/panel:latest@sha256:219045a24c160c711a18dfa964934b1c22aa3405d106826fdc0b3598863d45a8",
+    "ghcr.io/pterodactyl/panel:latest@sha256:c3b03105147a7cac205b7f1edada3f24229e5c8b395a98972c3da1281c5a36a1",
+    "mariadb:11@sha256:e1d5495f445654134f226f55a41ce0da227116f6f27f283101f405c794d841fc",
+    "redis:7-alpine@sha256:7f7d30b7fdd09467bac58198a1f166dd69789d348d4fe859cccb20e0cf287fbe"
+  ]
+}

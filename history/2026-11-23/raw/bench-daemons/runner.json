@@ -1,0 +1,20 @@
+{
+  "target": "daemons",
+  "cpuModel": "INTEL(R) XEON(R) PLATINUM 8573C",
+  "cores": 4,
+  "memoryBytes": 16758390784,
+  "diskFreeBytes": 124516741120,
+  "kernel": "7.0.0-1020-azure",
+  "arch": "x86_64",
+  "os": "ubuntu26",
+  "imageVersion": "20261116.202.1",
+  "runnerName": "GitHub Actions 1000026210",
+  "dockerVersion": "29.4.2",
+  "ohaVersion": "oha 1.17.0",
+  "images": [
+    "busybox:1.37@sha256:a7dbc319b1438115a207e11930dc4bb3e643dcb3ec0bdd694bb36cd8fad289ec",
+    "ghcr.io/mythicalltd/featherwings:latest@sha256:c91d09644a42095ae593fef981f9f16faf6ac20d80d403c10a9b541a2f25333d",
+    "ghcr.io/pelican/wings:latest@sha256:046c61f8df5c1363decc89f7777cb78f9b7b5230770b19d4588ab143a85589b4",
+    "ghcr.io/pterodactyl/wings:latest@sha256:6d0a513d1999e2d7930dde3fffb78fb80f38e0413452d28f64320c54f11be056"
+  ]
+}
